@@ -7,7 +7,7 @@ const TaskForm = () => {
 
   return (
     <>
-      <div className="flex items-end justify-between gap-4 mb-8">
+      <div className="flex items-end justify-between gap-4">
         <Button
           className="btn btn-success"
           icon={<FilePlus2 className="h-4 w-4" />}
@@ -20,26 +20,31 @@ const TaskForm = () => {
         <div className="modal-box w-11/12 max-w-5xl">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-bold text-lg flex-1">Create Task</h3>
-            <button
-              type="button"
-              className="btn btn-sm btn-circle btn-ghost"
-              onClick={() => modalRef.current.close()}
-            >
-              ✕
-            </button>
+            <div className="flex items-center  gap-2">
+              <span className="badge badge-primary text-xs font-semibold">
+                Task Reference ID: (New)
+              </span>
+              <button
+                type="button"
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={() => modalRef.current.close()}
+              >
+                ✕
+              </button>
+            </div>
           </div>
-          <div className="divider"></div>
+          <div className="divider my-2"></div>
 
           <form>
-            <div className="grid grid-cols-3 gap-1">
+            <div className="grid grid-cols-3 gap-1 mx-2">
               {/* Left Side - Task Form */}
               <div className="col-span-2">
-                <div className="max-h-[450px] overflow-y-auto min-h-0">
+                <div className="max-h-[450px] overflow-y-auto min-h-0 p-2">
                   {/* Task Name */}
                   <input
                     type="text"
                     placeholder="Task Name"
-                    className="input input-bordered input-md w-full mb-1"
+                    className="input input-bordered input-md w-full my-2"
                   />
 
                   {/* Task Description */}
@@ -49,12 +54,12 @@ const TaskForm = () => {
                   ></textarea>
 
                   {/* Fields Section */}
-                  <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div className="grid grid-cols-2 gap-4 mt-1">
                     {/* Assignee */}
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <User2 className="h-4 w-4" />
-                        <lable className="text-xs">Assignee</lable>
+                        <label className="text-xs">Assignee</label>
                       </div>
                       <select className="select select-bordered select-sm w-full">
                         <option value="" disabled>
@@ -69,7 +74,7 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <Link className="h-4 w-4" />
-                        <lable className="text-xs">Related to</lable>
+                        <label className="text-xs">Related to</label>
                       </div>
                       <input
                         type="text"
@@ -82,7 +87,7 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
-                        <lable className="text-xs">Start Date</lable>
+                        <label className="text-xs">Start Date</label>
                       </div>
                       <input
                         type="date"
@@ -94,7 +99,7 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
-                        <lable className="text-xs">End Date</lable>
+                        <label className="text-xs">End Date</label>
                       </div>
                       <input
                         type="date"
@@ -105,7 +110,7 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
-                        <lable className="text-xs">Completed</lable>
+                        <label className="text-xs">Completed</label>
                       </div>
                       <input
                         type="date"
@@ -116,7 +121,7 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
-                        <lable className="text-xs">Reminder On</lable>
+                        <label className="text-xs">Reminder On</label>
                       </div>
                       <input
                         type="date"
@@ -127,7 +132,7 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
-                        <lable className="text-xs">Reminder me On</lable>
+                        <label className="text-xs">Reminder me On</label>
                       </div>
                       <input
                         type="date"
@@ -147,7 +152,9 @@ const TaskForm = () => {
 
               {/* Right Side - Activity Section */}
               <div className="col-span-1 rounded-lg p-4 shadow-2xl max-h-[400px] overflow-y-auto min-h-0">
-                <h2 className="text-base font-medium mb-3">Current Assigned Tasks</h2>
+                <h2 className="text-base font-medium mb-3">
+                  Current Assigned Tasks
+                </h2>
 
                 <div className="relative border-dashed border-l-2 border-gray-600 pl-4 rounded">
                   {/* Task 1 */}

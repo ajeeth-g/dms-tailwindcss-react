@@ -7,7 +7,7 @@ import DocumentTable from "../components/DocumentTable";
 
 const UploadDocumentPage = () => {
   const modalRef = useRef(null);
-  
+
   const [tableData, setTableData] = useState([]);
 
   return (

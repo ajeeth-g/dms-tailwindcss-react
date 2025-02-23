@@ -2,6 +2,19 @@ import React, { useState } from "react";
 import { GlobalVariables } from "../config/globalVariables";
 import { saveService } from "../services/saveService";
 import { convertDataModelToString } from "../utils/dataModelConverter";
+import {
+  CalendarDays,
+  Clock3,
+  Link,
+  FileText,
+  Folder,
+  Loader,
+  LocateFixed,
+  MessageSquare,
+  User2,
+  UserRound,
+  Hash,
+} from "lucide-react";
 
 const DocumentForm = ({ modalRef, setTableData }) => {
   const [formData, setFormData] = useState({
@@ -77,14 +90,12 @@ const DocumentForm = ({ modalRef, setTableData }) => {
           COMMENTS: "",
           DOC_TAGS: "",
           FOR_THE_USERS: "",
-          EXPIRY_DATE: null,
+          EXPIRY_DATE: "",
           VERIFIED_BY: "",
-          VERIFIED_DATE: null,
-          REF_TASK_ID: null,
+          VERIFIED_DATE: "",
+          REF_TASK_ID: "",
           DOCUMENT_STATUS: "",
         }));
-
-        alert(`Document saved successfully with Ref No: ${newRefNo}`);
 
         if (modalRef.current) {
           modalRef.current?.close();
@@ -99,223 +110,227 @@ const DocumentForm = ({ modalRef, setTableData }) => {
 
   return (
     <>
-      <dialog ref={modalRef} id="add-document-details" className="modal">
+      <dialog ref={modalRef} id="create-task" className="modal">
         <div className="modal-box w-11/12 max-w-5xl">
-          <form method="dialog">
-            <button
-              type="button"
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => modalRef.current.close()}
-            >
-              ✕
-            </button>
-          </form>
-          <h3 className="font-bold text-lg">Add Document Details</h3>
-          <div className="divider"></div>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-bold text-lg flex-1">Add Document Details</h3>
+            <div className="flex items-center  gap-2">
+              <span className="badge badge-primary text-xs font-semibold">
+                Document Reference ID: (New)
+              </span>
+              <button
+                type="button"
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={() => modalRef.current.close()}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div className="divider my-2"></div>
 
           <form onSubmit={handleSubmit}>
-            <div className="flex flex-col">
-              <div className="grid grid-cols-4 gap-4">
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Document Number</span>
-                  <input
-                    type="text"
-                    name="DOCUMENT_NO"
-                    value={formData.DOCUMENT_NO}
-                    onChange={handleChange}
-                    placeholder="Enter document number"
-                    className="input input-bordered w-full"
-                  />
-                </label>
+            <div className="grid grid-cols-3 gap-1 mx-2">
+              {/* Left Side - Document Form */}
+              <div className="col-span-2">
+                <div className="max-h-[450px] overflow-y-auto min-h-0 p-2">
+                  {/* Fields Section */}
+                  <div className="grid grid-cols-2 gap-4 mt-1">
+                    {/* Document Number */}
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <div className="flex items-center gap-1">
+                        <Hash className="h-4 w-4" />
+                        <label htmlFor="DOCUMENT_NO" className="text-xs">
+                          Document No
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        name="DOCUMENT_NO"
+                        id="DOCUMENT_NO" // Added id
+                        placeholder="Enter document no"
+                        value={formData.DOCUMENT_NO}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
 
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Document Description</span>
-                  <input
-                    type="text"
-                    name="DOCUMENT_DESCRIPTION"
-                    value={formData.DOCUMENT_DESCRIPTION}
-                    onChange={handleChange}
-                    placeholder="Enter document description"
-                    className="input input-bordered w-full"
-                  />
-                </label>
+                    {/* Document Name */}
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <div className="flex items-center gap-1">
+                        <FileText className="h-4 w-4" />
+                        <label
+                          htmlFor="DOCUMENT_DESCRIPTION"
+                          className="text-xs"
+                        >
+                          Document Name
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        name="DOCUMENT_DESCRIPTION"
+                        id="DOCUMENT_DESCRIPTION" // Added id
+                        placeholder="Enter document name"
+                        value={formData.DOCUMENT_DESCRIPTION}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
 
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Document Source From</span>
-                  <input
-                    type="text"
-                    name="DOC_SOURCE_FROM"
-                    value={formData.DOC_SOURCE_FROM}
-                    onChange={handleChange}
-                    placeholder="Enter document source"
-                    className="input input-bordered w-full"
-                  />
-                </label>
+                    {/* Related To */}
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <div className="flex items-center gap-1">
+                        <Link className="h-4 w-4" />
+                        <label htmlFor="DOC_RELATED_TO" className="text-xs">
+                          Related To
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        name="DOC_RELATED_TO"
+                        id="DOC_RELATED_TO" // Added id
+                        placeholder="Enter related document"
+                        value={formData.DOC_RELATED_TO}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
 
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Related To</span>
-                  <select
-                    name="DOC_RELATED_TO"
-                    value={formData.DOC_RELATED_TO}
-                    onChange={handleChange}
-                    className="select select-bordered"
-                  >
-                    <option value="" disabled>
-                      Select Related to
-                    </option>
-                    <option value="Active">Related 1</option>
-                    <option value="Inactive">Related 1</option>
-                  </select>
-                </label>
+                    {/* Related Category */}
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <div className="flex items-center gap-1">
+                        <Folder className="h-4 w-4" />
+                        <label
+                          htmlFor="DOC_RELATED_CATEGORY"
+                          className="text-xs"
+                        >
+                          Related Category
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        name="DOC_RELATED_CATEGORY"
+                        id="DOC_RELATED_CATEGORY" // Added id
+                        placeholder="Enter category"
+                        value={formData.DOC_RELATED_CATEGORY}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
 
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Related Category</span>
-                  <select
-                    name="DOC_RELATED_CATEGORY"
-                    value={formData.DOC_RELATED_CATEGORY}
-                    onChange={handleChange}
-                    className="select select-bordered"
-                  >
-                    <option value="" disabled>
-                      Select Related Category
-                    </option>
-                    <option value="Active">Related Category 1</option>
-                    <option value="Inactive">Related Category 2</option>
-                  </select>
-                </label>
+                    {/* Expiry Date */}
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <div className="flex items-center gap-1">
+                        <CalendarDays className="h-4 w-4" />
+                        <label htmlFor="EXPIRY_DATE" className="text-xs">
+                          Expiry Date
+                        </label>
+                      </div>
+                      <input
+                        type="date"
+                        name="EXPIRY_DATE"
+                        id="EXPIRY_DATE" // Added id
+                        value={formData.EXPIRY_DATE}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
 
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Document Reference Value</span>
-                  <input
-                    type="text"
-                    name="DOC_REF_VALUE"
-                    value={formData.DOC_REF_VALUE}
-                    onChange={handleChange}
-                    placeholder="Enter reference value"
-                    className="input input-bordered w-full"
-                  />
-                </label>
+                    {/* Remarks */}
+                    <div className="flex flex-wrap items-center gap-3 w-full">
+                      <div className="flex items-center gap-1">
+                        <MessageSquare className="h-4 w-4" />
+                        <label htmlFor="COMMENTS" className="text-xs">
+                          Remarks
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        name="COMMENTS"
+                        id="COMMENTS" // Added id
+                        placeholder="Add remarks"
+                        value={formData.COMMENTS}
+                        onChange={handleChange}
+                        className="input input-bordered input-sm w-full"
+                      />
+                    </div>
+                  </div>
 
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Uploader Name</span>
-                  <input
-                    type="text"
-                    name="USER_NAME"
-                    value={formData.USER_NAME}
-                    onChange={handleChange}
-                    placeholder="Enter uploader name"
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Document Tags</span>
-                  <input
-                    type="text"
-                    name="ENT_DATE"
-                    value={formData.ENT_DATE}
-                    onChange={handleChange}
-                    placeholder="Enter tags"
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">For The Users</span>
-                  <input
-                    type="text"
-                    name="FOR_THE_USERS"
-                    value={formData.FOR_THE_USERS}
-                    onChange={handleChange}
-                    placeholder="Enter user details"
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Expiry Date</span>
-                  <input
-                    type="date"
-                    name="EXPIRY_DATE"
-                    value={formData.EXPIRY_DATE}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Verified By</span>
-                  <input
-                    type="text"
-                    name="VERIFIED_BY"
-                    value={formData.VERIFIED_BY}
-                    onChange={handleChange}
-                    placeholder="Enter verified by"
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Verified Date</span>
-                  <input
-                    type="date"
-                    name="VERIFIED_DATE"
-                    value={formData.VERIFIED_DATE}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Reference Task ID</span>
-                  <input
-                    type="number"
-                    name="REF_TASK_ID"
-                    value={formData.REF_TASK_ID}
-                    onChange={handleChange}
-                    className="input input-bordered w-full"
-                  />
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Document Status</span>
-                  <select
-                    name="DOCUMENT_STATUS"
-                    value={formData.DOCUMENT_STATUS}
-                    onChange={handleChange}
-                    className="select select-bordered"
-                  >
-                    <option value="" disabled>
-                      Select Status
-                    </option>
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </label>
-
-                <label className="form-control w-full max-w-xs">
-                  <span className="label-text">Comments</span>
-                  <textarea
-                    name="COMMENTS"
-                    value={formData.COMMENTS}
-                    onChange={handleChange}
-                    placeholder="Enter comments"
-                    className="textarea textarea-bordered w-full"
-                  ></textarea>
-                </label>
+                  {/* Action Buttons */}
+                  <div className="modal-action">
+                    <button type="submit" className="btn btn-success">
+                      Create Document
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              <div className="modal-action">
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => modalRef.current.close()}
-                >
-                  Close
-                </button>
-                <button type="submit" className="btn btn-success">
-                  Save
-                </button>
+              {/* Right Side - Activity Section */}
+              <div className="col-span-1 rounded-lg p-4 shadow-2xl max-h-[400px] overflow-y-auto min-h-0">
+                <h2 className="text-base font-medium mb-3">Others:</h2>
+
+                {/* Fields Section */}
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <LocateFixed className="h-4 w-4" />
+                      <label className="text-sm">Document Received From</label>
+                    </div>
+                    <p className="text-sm font-medium">TRI Dubai</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <LocateFixed className="h-4 w-4" />
+                      <label className="text-sm">
+                        Document Reference Value
+                      </label>
+                    </div>
+                    <p className="text-sm font-medium">TRI Dubai</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <UserRound className="h-4 w-4" />
+                      <label className="text-sm">Uploader Name</label>
+                    </div>
+                    <p className="text-sm font-medium">Aneesh</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <LocateFixed className="h-4 w-4" />
+                      <label className="text-sm">Verified by</label>
+                    </div>
+                    <p className="text-sm font-medium">Santhosh</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <Clock3 className="h-4 w-4" />
+                      <label className="text-sm">Verified date</label>
+                    </div>
+                    <p className="text-sm font-medium">TRI Dubai</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <LocateFixed className="h-4 w-4" />
+                      <label className="text-sm">Reference Task ID</label>
+                    </div>
+                    <p className="text-sm font-medium">#SPK-2212</p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 w-full">
+                    <div className="flex items-center gap-1 text-gray-500">
+                      <Loader className="h-4 w-4" />
+                      <label className="text-sm">Document Status</label>
+                    </div>
+                    <p className="badge badge-success text-xs font-medium">
+                      Processing
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </form>

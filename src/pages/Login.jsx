@@ -12,13 +12,10 @@ const Login = ({ setUser }) => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Use the demo credentials for now
     if (email === "demo@istreams.com" && password === "pass@123") {
       setUserDetails(email, password);
       setUser(true);
-
-      alert(`Welcome back, ${email}!`);
-      navigate("/dashboard");
+      navigate("/");
     } else {
       alert("Invalid credentials!");
     }

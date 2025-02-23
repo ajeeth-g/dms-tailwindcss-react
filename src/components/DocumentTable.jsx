@@ -10,12 +10,12 @@ const DocumentTable = ({ data = [] }) => {
   const handleEdit = (doc) => {
     setSelectedDocument(doc);
     setIsModalOpen(true);
-    document.getElementById("document_attachment").showModal();
+    // document.getElementById("document_attachment").showModal();
   };
 
   return (
     <>
-      <div className="overflow-x-auto w-auto h-screen">
+      <div className="overflow-x-auto w-auto">
         <table className="table table-xs table-pin-rows table-pin-cols">
           <thead>
             <tr>
@@ -53,21 +53,21 @@ const DocumentTable = ({ data = [] }) => {
                     </label>
                   </td>
                   <td className="text-end">1</td>
-                  <td>#{doc.refSeqNo}</td>
+                  <td>#{doc.REF_SEQ_NO}</td>
                   <td>
                     <div>
                       <div className="font-bold">{doc.documentDescription}</div>
                       <div className="text-sm opacity-50">
-                        uploaded {doc.expiryDate}
+                        uploaded {doc.EXPIRY_DATE}
                       </div>
                     </div>
                   </td>
                   <td>
                     <span className="badge badge-secondary badge-sm">
-                      {doc.docRelatedCategory}
+                      {doc.DOC_RELATED_CATEGORY}
                     </span>
                   </td>
-                  <td>{doc.branch}</td>
+                  <td>{doc.DOCUMENT_DESCRIPTION}</td>
                   <td>Manager</td>
                   <td>
                     <div className="flex items-center gap-1">
@@ -81,9 +81,9 @@ const DocumentTable = ({ data = [] }) => {
                       </div>
                       <div>
                         <div className="font-bold">
-                          {doc.documentDescription.length > 12
-                            ? `${doc.documentDescription.slice(0, 12)}...`
-                            : doc.documentDescription}
+                          {doc.DOCUMENT_DESCRIPTION.length > 12
+                            ? `${doc.DOCUMENT_DESCRIPTION.slice(0, 12)}...`
+                            : doc.DOCUMENT_DESCRIPTION}
                         </div>
                       </div>
                     </div>
@@ -118,7 +118,10 @@ const DocumentTable = ({ data = [] }) => {
       </div>
 
       {isModalOpen && selectedDocument && (
-        <DocumentUpload modalRef={modalRef} />
+        <DocumentUpload
+          modalRef={modalRef}
+          selectedDocument={selectedDocument}
+        />
       )}
     </>
   );

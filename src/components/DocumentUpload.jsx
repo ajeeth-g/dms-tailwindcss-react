@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAuth } from "../context/AuthContext";
 
-const DocumentUpload = ({ modalRef }) => {
+const DocumentUpload = ({ modalRef, selectedDocument }) => {
   const { domain } = useAuth();
   const [files, setFiles] = useState([]);
 
@@ -17,7 +17,7 @@ const DocumentUpload = ({ modalRef }) => {
 
     // Append other data
     formData.append("domainName", domain);
-    formData.append("refNo", selectedDocument.refNo);
+    formData.append("refNo", selectedDocument.REF_SEQ_NO);
     formData.append("category", files[0].category || "Other");
 
     // Log FormData to verify contents
@@ -111,13 +111,13 @@ const DocumentUpload = ({ modalRef }) => {
             <h6 className="font-semibold">
               Reference No:
               <span className="badge badge-primary">
-                {selectedDocument.refNo}
+                {/* {selectedDocument.REF_SEQ_NO} */}
               </span>
             </h6>
             <h6 className="font-semibold">
               Document Name:
               <span className="badge badge-primary">
-                {selectedDocument.documentName}
+                {/* {selectedDocument.documentName} */}
               </span>
             </h6>
           </div>

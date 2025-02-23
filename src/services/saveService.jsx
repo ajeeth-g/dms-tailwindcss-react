@@ -26,8 +26,6 @@ export const saveService = async (formattedData) => {
 
     const textResponse = await response.text();
 
-    console.log("🔹 Save Response:", textResponse);
-
     return textResponse; // XML response
   } catch (error) {
     console.error(`SOAP request error: ${error}`);
