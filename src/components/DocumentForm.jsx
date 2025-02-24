@@ -141,14 +141,14 @@ const DocumentForm = ({ modalRef, setTableData }) => {
                       <div className="flex items-center gap-1">
                         <Hash className="h-4 w-4" />
                         <label htmlFor="DOCUMENT_NO" className="text-xs">
-                          Document No
+                          Document Ref No
                         </label>
                       </div>
                       <input
                         type="text"
                         name="DOCUMENT_NO"
                         id="DOCUMENT_NO" // Added id
-                        placeholder="Enter document no"
+                        placeholder="Enter document ref no"
                         value={formData.DOCUMENT_NO}
                         onChange={handleChange}
                         className="input input-bordered input-sm w-full"
@@ -185,15 +185,23 @@ const DocumentForm = ({ modalRef, setTableData }) => {
                           Related To
                         </label>
                       </div>
-                      <input
-                        type="text"
+
+                      <select
                         name="DOC_RELATED_TO"
-                        id="DOC_RELATED_TO" // Added id
-                        placeholder="Enter related document"
+                        id="DOC_RELATED_TO"
                         value={formData.DOC_RELATED_TO}
                         onChange={handleChange}
-                        className="input input-bordered input-sm w-full"
-                      />
+                        className="select select-bordered select-sm w-full"
+                      >
+                        <option value="" disabled>
+                          Select related to
+                        </option>
+                        <option value="Invoice">HR</option>
+                        <option value="Contract">Accounts</option>
+                        <option value="Report">QS</option>
+                        <option value="Memo">Estimation</option>
+                        <option value="Other">Projects</option>
+                      </select>
                     </div>
 
                     {/* Related Category */}
@@ -207,15 +215,24 @@ const DocumentForm = ({ modalRef, setTableData }) => {
                           Related Category
                         </label>
                       </div>
-                      <input
-                        type="text"
+                      <select
                         name="DOC_RELATED_CATEGORY"
-                        id="DOC_RELATED_CATEGORY" // Added id
-                        placeholder="Enter category"
+                        id="DOC_RELATED_CATEGORY"
                         value={formData.DOC_RELATED_CATEGORY}
                         onChange={handleChange}
-                        className="input input-bordered input-sm w-full"
-                      />
+                        className="select select-bordered select-sm w-full"
+                      >
+                        <option value="" disabled>
+                          Select related category
+                        </option>
+                        <option value="Invoice">HRMS</option>
+                        <option value="Contract">Passport</option>
+                        <option value="Report">Visa</option>
+                        <option value="Memo">Supplier Invoice</option>
+                        <option value="Report">QS</option>
+                        <option value="Report">Credit Notes</option>
+                        <option value="Other">Sales Invoice</option>
+                      </select>
                     </div>
 
                     {/* Expiry Date */}

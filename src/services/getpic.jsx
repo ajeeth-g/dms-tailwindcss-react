@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const getpic = async (empNo) => {
+const getEmployeeNameAndId = async (userFirstName) => {
   const soapRequest = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:web="http://tempuri.org/">
       <soapenv:Header/>
       <soapenv:Body>
-        <web:getpic>
-          <web:EmpNo>${empNo}</web:EmpNo>
-        </web:getpic>
+        <web:getemployeename_and_id>
+          <web:userfirstname>${userFirstName}</web:userfirstname>
+        </web:getemployeename_and_id>
       </soapenv:Body>
     </soapenv:Envelope>
   `;
@@ -19,27 +19,27 @@ const getpic = async (empNo) => {
       {
         headers: {
           "Content-Type": "text/xml; charset=utf-8",
-          SOAPAction: "http://tempuri.org/getpic",
+          SOAPAction: "http://tempuri.org/getemployeename_and_id",
         },
       }
     );
 
-    // console.log("🔹 getPic Response:", response.data);
-
     // Parse XML Response
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(response.data, "text/xml");
-    const base64String =
-      xmlDoc.getElementsByTagName("getpicResult")[0]?.textContent;
+    const employeeName =
+      xmlDoc.getElementsByTagName("EmployeeName")[0]?.textContent;
+    const employeeId =
+      xmlDoc.getElementsByTagName("EmployeeID")[0]?.textContent;
 
-    return base64String ? `data:image/png;base64,${base64String}` : null;
+    return { employeeName, employeeId };
   } catch (error) {
     console.error(
-      "❌ Error fetching picture:",
+      "❌ Error fetching employee details:",
       error?.response?.data || error.message
     );
     return null;
   }
 };
 
-export default getpic;
+export default getEmployeeNameAndId;

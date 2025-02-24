@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { CalendarDays, FileType2, Hash, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useAuth } from "../context/AuthContext";
@@ -108,16 +108,16 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
           <div className="divider"></div>
 
           <div className="flex justify-between mb-3">
-            <h6 className="font-semibold">
+            <h6 className="flex items-center gap-2 font-semibold">
               Reference No:
               <span className="badge badge-primary">
-                {/* {selectedDocument.REF_SEQ_NO} */}
+                {selectedDocument.REF_SEQ_NO}
               </span>
             </h6>
-            <h6 className="font-semibold">
+            <h6 className="flex items-center gap-2 font-semibold">
               Document Name:
               <span className="badge badge-primary">
-                {/* {selectedDocument.documentName} */}
+                {selectedDocument.DOCUMENT_DESCRIPTION}
               </span>
             </h6>
           </div>
@@ -157,37 +157,47 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
                           </span>
                         </div>
                       </div>
-                      <select
-                        className="select select-bordered select-sm w-full max-w-xs  bg-neutral text-neutral-content"
-                        value={file.category}
-                        onChange={(e) =>
-                          handleCategoryChange(index, e.target.value)
-                        }
-                      >
-                        <option disabled value="">
-                          Select Type
-                        </option>
-                        <option value="ID Proof">ID Proof</option>
-                        <option value="Resume">Resume</option>
-                        <option value="Certificate">Certificate</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <div className="flex flex-col items-center gap-2 w-full">
+                        <div className="w-full">
+                          <div className="flex items-center gap-1 mb-2">
+                            <FileType2 className="h-4 w-4" />
+                            <label htmlFor="DOCUMENT_NO" className="text-xs">
+                              Document Type
+                            </label>
+                          </div>
+                          <select
+                            className="select select-bordered select-sm w-full max-w-xs bg-neutral text-neutral-content"
+                            value={file.category}
+                            onChange={(e) =>
+                              handleCategoryChange(index, e.target.value)
+                            }
+                          >
+                            <option disabled value="">
+                              Select Type
+                            </option>
+                            <option value="ID Proof">ID Proof</option>
+                            <option value="Resume">Resume</option>
+                            <option value="Certificate">Certificate</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
 
-                      <select
-                        className="select select-bordered select-sm w-full max-w-xs  bg-neutral text-neutral-content"
-                        value={file.category}
-                        onChange={(e) =>
-                          handleCategoryChange(index, e.target.value)
-                        }
-                      >
-                        <option disabled value="">
-                          Select Type
-                        </option>
-                        <option value="ID Proof">ID Proof</option>
-                        <option value="Resume">Resume</option>
-                        <option value="Certificate">Certificate</option>
-                        <option value="Other">Other</option>
-                      </select>
+                        <div className="w-full">
+                          <div className="flex items-center gap-1 mb-2">
+                            <CalendarDays className="h-4 w-4" />
+                            <label htmlFor="DOCUMENT_NO" className="text-xs">
+                              Document Expiry Date
+                            </label>
+                          </div>
+                          <input
+                            type="date"
+                            name="DOCUMENT_NO"
+                            id="DOCUMENT_NO" // Added id
+                            placeholder="Enter document ref no"
+                            className="input input-bordered input-sm w-full bg-neutral text-neutral-content"
+                          />
+                        </div>
+                      </div>
 
                       <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                         <div

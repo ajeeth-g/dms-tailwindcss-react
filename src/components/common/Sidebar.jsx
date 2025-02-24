@@ -46,7 +46,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              to="/uploadDocument"
+              to="/Upload"
               className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <FileUp className="h-5 w-5" />
@@ -55,11 +55,11 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              to="/tasks"
+              to="/Document"
               className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <ListTodo className="h-5 w-5" />
-              Tasks
+              Documents
             </Link>
           </li>
         </ul>

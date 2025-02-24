@@ -27,8 +27,8 @@ const App = () => {
             element={<ProtectedLayout user={user} setUser={setUser} />}
           >
             <Route index element={<Dashboard />} />
-            <Route path="uploadDocument" element={<UploadDocumentPage />} />
-            <Route path="tasks" element={<TaskAssignment />} />
+            <Route path="Upload" element={<UploadDocumentPage />} />
+            <Route path="Document" element={<TaskAssignment />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

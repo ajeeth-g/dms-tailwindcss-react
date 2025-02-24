@@ -9,17 +9,17 @@ import {
 } from "recharts";
 
 const orderStatusData = [
-  { name: "In Review", value: 30 },
-  { name: "Pending Approval", value: 45 },
-  { name: "Approved", value: 60 },
-  { name: "Rejected", value: 120 },
+  { name: "Total Documents", value: 120 },
+  { name: "Approved", value: 85 },
+  { name: "Completed", value: 25 },
+  { name: "Inprogress", value: 10 },
 ];
 const COLORS = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#FED766", "#2AB7CA"];
 
 const OrderDistribution = () => {
   return (
     <motion.div
-      className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700"
+      className="bg-gray-900 bg-opacity-40 backdrop-blur-lg shadow-md rounded-2xl p-6 border border-gray-700"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}

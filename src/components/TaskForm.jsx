@@ -1,21 +1,114 @@
-import React, { useRef } from "react";
-import Button from "./common/Button";
-import { CalendarDays, FilePlus2, Link, Link2, User2 } from "lucide-react";
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { CalendarDays, Link, User2 } from "lucide-react";
+import getAllUsers from "../services/employeeService";
+import createTask from "../services/createTaskService";
 
-const TaskForm = () => {
+const TaskForm = forwardRef(({ data, onTaskChange }, ref) => {
+  const formatDateTime = (date) => {
+    const options = { day: "2-digit", month: "2-digit", year: "numeric" };
+    const formattedDate = new Intl.DateTimeFormat("en-GB", options)
+      .format(date)
+      .split("/")
+      .join("-"); // Format: DD-MM-YYYY
+
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12; // Convert 24h to 12h format
+    minutes = minutes < 10 ? `0${minutes}` : minutes; // Ensure two-digit minutes
+
+    return `${formattedDate} ${hours}.${minutes} ${ampm}`;
+  };
+
   const modalRef = useRef(null);
+  const [users, setUsers] = useState([]);
+  const [taskData, setTaskData] = useState({
+    taskSubject: "",
+    taskName: "",
+    assignedTo: "GOPI",
+    relatedTo: "",
+    assignedDate: formatDateTime(new Date()),
+    targetDate: formatDateTime(new Date(Date.now() + 86400000)), // Adds 1 day
+    creatorReminderOn: formatDateTime(new Date()),
+    remindOnDate: formatDateTime(new Date()),
+    responseMessage: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type } = e.target;
+
+    setTaskData((prev) => ({
+      ...prev,
+      [name]: type === "date" ? formatDateTime(new Date(value)) : value, // Format only if it's a date input
+    }));
+  };
+
+  // Update taskData when `data` is available
+  useEffect(() => {
+    if (data) {
+      setTaskData((prev) => ({
+        ...prev,
+        taskName: data.taskName || prev.taskName,
+        assignedDate: data.assignedDate || prev.assignedDate,
+        assignedTo: data.assignedTo || prev.assignedTo,
+      }));
+    }
+  }, [data]);
+
+  // Expose open and close methods using ref
+  useImperativeHandle(ref, () => ({
+    openModal: () => modalRef.current.showModal(),
+    closeModal: () => modalRef.current.close(),
+  }));
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const userData = await getAllUsers("gopi@demo.com");
+        if (userData) setUsers(userData);
+      } catch (error) {
+        console.error("Failed to fetch users", error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const createNewTask = async () => {
+      // ✅ Handle API call in a function
+      const taskData1 = {
+        UserName: taskData.assignedTo,
+        Subject: taskData.taskName,
+        Details: "Test Details",
+        RelatedTo: taskData.relatedTo,
+        AssignedUser: taskData.assignedTo,
+        CreatorReminderOn: "2024-02-25T10:00:00",
+        StartDate: "2024-02-25",
+        CompDate: "2024-02-26",
+        RemindTheUserOn: "2024-02-25T12:00:00",
+      };
+
+      try {
+        const response = await createTask(taskData1);
+        console.log("🔹 Task Created Successfully:", response);
+      } catch (error) {
+        console.error("❌ Error creating task:", error);
+      }
+    };
+    await createNewTask();
+    modalRef.current.close();
+  };
 
   return (
     <>
-      <div className="flex items-end justify-between gap-4">
-        <Button
-          className="btn btn-success"
-          icon={<FilePlus2 className="h-4 w-4" />}
-          onClick={() => modalRef.current.showModal()}
-          label="Create task"
-        />
-      </div>
-
       <dialog ref={modalRef} id="create-task" className="modal">
         <div className="modal-box w-11/12 max-w-5xl">
           <div className="flex items-center justify-between gap-2">
@@ -35,7 +128,7 @@ const TaskForm = () => {
           </div>
           <div className="divider my-2"></div>
 
-          <form>
+          <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-3 gap-1 mx-2">
               {/* Left Side - Task Form */}
               <div className="col-span-2">
@@ -43,13 +136,20 @@ const TaskForm = () => {
                   {/* Task Name */}
                   <input
                     type="text"
+                    name="taskName"
                     placeholder="Task Name"
+                    value={taskData.taskName}
+                    onChange={handleChange}
                     className="input input-bordered input-md w-full my-2"
                   />
 
                   {/* Task Description */}
                   <textarea
-                    placeholder="Task Description..."
+                    type="text"
+                    name="taskSubject"
+                    placeholder="Task Subject"
+                    value={taskData.taskSubject}
+                    onChange={handleChange}
                     className="textarea textarea-bordered textarea-md w-full"
                   ></textarea>
 
@@ -59,14 +159,22 @@ const TaskForm = () => {
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <User2 className="h-4 w-4" />
-                        <label className="text-xs">Assignee</label>
+                        <label className="text-xs">Assign to</label>
                       </div>
-                      <select className="select select-bordered select-sm w-full">
+                      <select
+                        name="assignedTo"
+                        value={taskData.assignedTo}
+                        onChange={handleChange}
+                        className="select select-bordered select-sm w-full"
+                      >
                         <option value="" disabled>
                           Select Person
                         </option>
-                        <option value="Anees">Anees</option>
-                        <option value="Related1">Related 1</option>
+                        {users.map((user, index) => (
+                          <option key={index} value={user.user_name}>
+                            {user.user_name}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -76,11 +184,23 @@ const TaskForm = () => {
                         <Link className="h-4 w-4" />
                         <label className="text-xs">Related to</label>
                       </div>
-                      <input
-                        type="text"
-                        placeholder="Enter related"
-                        className="input input-bordered input-sm w-full"
-                      />
+
+                      <select
+                        name="relatedTo"
+                        id="relatedTo"
+                        value={taskData.relatedTo}
+                        onChange={handleChange}
+                        className="select select-bordered select-sm w-full"
+                      >
+                        <option value="" disabled>
+                          Select related to
+                        </option>
+                        <option value="Invoice">HR</option>
+                        <option value="Contract">Accounts</option>
+                        <option value="Report">QS</option>
+                        <option value="Memo">Estimation</option>
+                        <option value="Other">Projects</option>
+                      </select>
                     </div>
 
                     {/* Start Date */}
@@ -90,7 +210,10 @@ const TaskForm = () => {
                         <label className="text-xs">Start Date</label>
                       </div>
                       <input
-                        type="date"
+                        type="datetime-local"
+                        name="assignedDate"
+                        value={taskData.assignedDate}
+                        onChange={handleChange}
                         className="input input-bordered input-sm w-full"
                       />
                     </div>
@@ -102,21 +225,27 @@ const TaskForm = () => {
                         <label className="text-xs">End Date</label>
                       </div>
                       <input
-                        type="date"
+                        type="datetime-local"
+                        name="targetDate"
+                        value={taskData.targetDate}
+                        onChange={handleChange}
                         className="input input-bordered input-sm w-full"
                       />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 w-full">
+                    {/* <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-4 w-4" />
                         <label className="text-xs">Completed</label>
                       </div>
                       <input
-                        type="date"
+                        type="datetime-local"
+                        name="targetDate"
+                        value={taskData.targetDate}
+                        onChange={handleChange}
                         className="input input-bordered input-sm w-full"
                       />
-                    </div>
+                    </div> */}
 
                     <div className="flex flex-wrap items-center gap-3 w-full">
                       <div className="flex items-center gap-1">
@@ -124,7 +253,10 @@ const TaskForm = () => {
                         <label className="text-xs">Reminder On</label>
                       </div>
                       <input
-                        type="date"
+                        type="datetime-local"
+                        name="remindOnDate"
+                        value={taskData.remindOnDate}
+                        onChange={handleChange}
                         className="input input-bordered input-sm w-full"
                       />
                     </div>
@@ -136,6 +268,9 @@ const TaskForm = () => {
                       </div>
                       <input
                         type="date"
+                        name="creatorReminderOn"
+                        value={taskData.creatorReminderOn}
+                        onChange={handleChange}
                         className="input input-bordered input-sm w-full"
                       />
                     </div>
@@ -214,6 +349,6 @@ const TaskForm = () => {
       </dialog>
     </>
   );
-};
+});
 
 export default TaskForm;

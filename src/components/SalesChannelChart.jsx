@@ -14,16 +14,17 @@ import {
 const COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#10B981", "#F59E0B"];
 
 const SALES_CHANNEL_DATA = [
-  { name: "TRI Dubai", value: 45600 },
-  { name: "TRI Chennai", value: 38200 },
-  { name: "TRI Mumbai", value: 29800 },
-  { name: "TRI Pune", value: 18700 },
+  { name: "TRI Dubai", channels: 45600 },
+  { name: "TRI Chennai", channels: 38200 },
+  { name: "TRI KSA", channels: 29800 },
+  { name: "TRI Qatar", channels: 29800 },
+  { name: "TRI CMIS", channels: 18700 },
 ];
 
 const SalesChannelChart = () => {
   return (
     <motion.div
-      className="bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 lg:col-span-1 border border-gray-700"
+      className="bg-gray-900 bg-opacity-40 backdrop-blur-lg shadow-md rounded-2xl p-6 border border-gray-700"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
@@ -45,7 +46,7 @@ const SalesChannelChart = () => {
               itemStyle={{ color: "#E5E7EB" }}
             />
             <Legend />
-            <Bar dataKey={"value"} fill="#8884d8">
+            <Bar dataKey={"channels"} fill="#8884d8">
               {SALES_CHANNEL_DATA.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}

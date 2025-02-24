@@ -9,12 +9,10 @@ import {
 } from "recharts";
 
 const channelData = [
-  { name: "Uploaded", value: 4000 },
-  { name: "Reviewed", value: 3000 },
-  { name: "Approved", value: 2000 },
-  { name: "Pending Review", value: 2780 },
-  { name: "Rejected", value: 1890 },
-  { name: "Deleted", value: 2390 },
+  { name: "Total Documents", value: 4000 },
+  { name: "Approved", value: 3000 },
+  { name: "Completed", value: 2780 },
+  { name: "Inprogress", value: 1890 },
 ];
 
 const COLORS = [
@@ -29,7 +27,7 @@ const COLORS = [
 const ChannelPerformance = () => {
   return (
     <motion.div
-      className="bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-lg shadow-lg rounded-xl p-6 border border-gray-700"
+      className="bg-gray-900 bg-opacity-40 backdrop-blur-lg shadow-md rounded-2xl p-6 border border-gray-700"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}

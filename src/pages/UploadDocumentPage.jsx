@@ -11,8 +11,8 @@ const UploadDocumentPage = () => {
   const [tableData, setTableData] = useState([]);
 
   return (
-    <>
-      <div className="flex items-end justify-between gap-4 mb-8">
+    <div className="rounded-2xl p-6 border border-gray-700 h-full">
+      <div className="flex items-end justify-between gap-4 mb-8 ">
         <SearchInput />
         <Button
           className="btn btn-success"
@@ -24,8 +24,8 @@ const UploadDocumentPage = () => {
 
       <DocumentForm modalRef={modalRef} setTableData={setTableData} />
 
-      <DocumentTable data={tableData} />
-    </>
+      <DocumentTable tableData={tableData} />
+    </div>
   );
 };
 
