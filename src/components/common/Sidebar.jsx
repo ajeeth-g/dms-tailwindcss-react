@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 import Logo from "../../assets/logo-light.png";
 import { ExternalLink, FileUp, LayoutPanelLeft, ListTodo } from "lucide-react";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen }) => {
   return (
-    <div className="min-h-screen">
+    <aside
+      className={`${
+        isOpen ? "w-full max-w-48" : "w-0"
+      } min-h-screen bg-base-300 text-base-content transition-all duration-300 overflow-hidden`}
+    >
       <Link
         to="https://cloud.istreams-erp.com/"
         target="_blank"
@@ -34,7 +38,7 @@ const Sidebar = () => {
       <div className="px-2 pt-2">
         <h6 className="text-xs text-gray-500 font-bold py-2">MENU</h6>
         {/* Navigation Menu */}
-        <ul className="menu menu-md w-full max-w-xs p-0">
+        <ul className="menu menu-md w-full p-0">
           <li>
             <Link
               to="/"
@@ -50,7 +54,7 @@ const Sidebar = () => {
               className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <FileUp className="h-5 w-5" />
-              Upload Docs
+              Upload
             </Link>
           </li>
           <li>
@@ -64,7 +68,7 @@ const Sidebar = () => {
           </li>
         </ul>
       </div>
-    </div>
+    </aside>
   );
 };
 

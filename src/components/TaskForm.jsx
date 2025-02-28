@@ -1,32 +1,10 @@
-import React, {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useState } from "react";
 import { CalendarDays, Link, User2 } from "lucide-react";
-import getAllUsers from "../services/employeeService";
-import createTask from "../services/createTaskService";
+import { getAllUsers } from "../api/getAllUsers";
+import { createTask } from "../api/createTaskService";
+import { formatDateTime } from "../utils/dateUtils";
 
-const TaskForm = forwardRef(({ data, onTaskChange }, ref) => {
-  const formatDateTime = (date) => {
-    const options = { day: "2-digit", month: "2-digit", year: "numeric" };
-    const formattedDate = new Intl.DateTimeFormat("en-GB", options)
-      .format(date)
-      .split("/")
-      .join("-"); // Format: DD-MM-YYYY
-
-    let hours = date.getHours();
-    let minutes = date.getMinutes();
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12; // Convert 24h to 12h format
-    minutes = minutes < 10 ? `0${minutes}` : minutes; // Ensure two-digit minutes
-
-    return `${formattedDate} ${hours}.${minutes} ${ampm}`;
-  };
-
-  const modalRef = useRef(null);
+const TaskForm = ({ modalRef }) => {
   const [users, setUsers] = useState([]);
   const [taskData, setTaskData] = useState({
     taskSubject: "",
@@ -34,7 +12,7 @@ const TaskForm = forwardRef(({ data, onTaskChange }, ref) => {
     assignedTo: "GOPI",
     relatedTo: "",
     assignedDate: formatDateTime(new Date()),
-    targetDate: formatDateTime(new Date(Date.now() + 86400000)), // Adds 1 day
+    targetDate: formatDateTime(new Date(Date.now())), // Adds 1 day
     creatorReminderOn: formatDateTime(new Date()),
     remindOnDate: formatDateTime(new Date()),
     responseMessage: "",
@@ -45,32 +23,15 @@ const TaskForm = forwardRef(({ data, onTaskChange }, ref) => {
 
     setTaskData((prev) => ({
       ...prev,
-      [name]: type === "date" ? formatDateTime(new Date(value)) : value, // Format only if it's a date input
+      [name]:
+        type === "datetime-local" ? formatDateTime(new Date(value)) : value, // Format only if it's a date input
     }));
   };
-
-  // Update taskData when `data` is available
-  useEffect(() => {
-    if (data) {
-      setTaskData((prev) => ({
-        ...prev,
-        taskName: data.taskName || prev.taskName,
-        assignedDate: data.assignedDate || prev.assignedDate,
-        assignedTo: data.assignedTo || prev.assignedTo,
-      }));
-    }
-  }, [data]);
-
-  // Expose open and close methods using ref
-  useImperativeHandle(ref, () => ({
-    openModal: () => modalRef.current.showModal(),
-    closeModal: () => modalRef.current.close(),
-  }));
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const userData = await getAllUsers("gopi@demo.com");
+        const userData = await getAllUsers();
         if (userData) setUsers(userData);
       } catch (error) {
         console.error("Failed to fetch users", error);
@@ -349,6 +310,6 @@ const TaskForm = forwardRef(({ data, onTaskChange }, ref) => {
       </dialog>
     </>
   );
-});
+};
 
 export default TaskForm;

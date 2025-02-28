@@ -1,80 +1,95 @@
-import { CalendarDays, FileType2, Hash, X } from "lucide-react";
+import { CalendarDays, FileType2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { useAuth } from "../context/AuthContext";
+import { v4 as uuidv4 } from "uuid";
+import { getDataModel } from "../services/dataService";
+import { createAndSaveDMSDetails } from "../services/dmsService";
+import { readFileAsBase64 } from "../utils/soapUtils";
+
+const initialFormState = {
+  REF_SEQ_NO: -1, // Document reference from parent document
+  SERIAL_NO: 0,   // Sequential number per file (set later)
+  DOCUMENT_NO: "", // From parent document or can be overridden
+  DOCUMENT_DESCRIPTION: "",
+  DOC_SOURCE_FROM: "",
+  DOC_RELATED_TO: "",
+  DOC_RELATED_CATEGORY: "",
+  DOC_REF_VALUE: "",
+  USER_NAME: "",
+  COMMENTS: "",
+  DOC_TAGS: "",
+  FOR_THE_USERS: "",
+  EXPIRY_DATE: "", // May be provided per file
+  DOC_DATA: "",
+  DOC_NAME: "",
+  DOC_EXT: "",
+  FILE_PATH: "",
+};
 
 const DocumentUpload = ({ modalRef, selectedDocument }) => {
-  const { domain } = useAuth();
+  // SOAP parameter states for category lookup
+  const [dataModelName] = useState("SYNM_DMS_DOC_CATEGORIES");
+  const [whereCondition] = useState("");
+  const [orderby] = useState("");
+
+  // Category data state
+  const [categoryData, setCategoryData] = useState([]);
   const [files, setFiles] = useState([]);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSave = async () => {
-    const formData = new FormData();
-
-    // Loop through files and append each file under the same 'file' field
-    files.forEach((file) => {
-      formData.append("file", file.file);
-    });
-
-    // Append other data
-    formData.append("domainName", domain);
-    formData.append("refNo", selectedDocument.REF_SEQ_NO);
-    formData.append("category", files[0].category || "Other");
-
-    // Log FormData to verify contents
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ": " + pair[1]);
-    }
-
-    try {
-      const response = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Files uploaded:", result);
-        setIsModalOpen(false);
-        document.getElementById("document_attachment").close();
-      } else {
-        console.error("Upload failed");
+  // Fetch category data on component mount
+  useEffect(() => {
+    const fetchCategoryDataModel = async () => {
+      try {
+        const response = await getDataModel({
+          dataModelName,
+          whereCondition,
+          orderby,
+        });
+        setCategoryData(response);
+      } catch (err) {
+        console.error("Error fetching data model:", err);
       }
-    } catch (error) {
-      console.error("Error uploading files:", error);
-    }
-  };
+    };
+    fetchCategoryDataModel();
+  }, [dataModelName, whereCondition, orderby]);
 
-  const onDrop = async (acceptedFiles) => {
-    setFiles((prevFiles) => [
-      ...prevFiles,
-      ...acceptedFiles.map((file) => ({
-        file,
-        preview: file.type.startsWith("image")
-          ? URL.createObjectURL(file)
-          : null,
-        name: file.name,
-        size: (file.size / 1024).toFixed(2) + " KB",
-        category: "", // Add category if needed later
-        progress: 0,
-      })),
-    ]);
-  };
-
-  const handleRemoveFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
-
-  const handleCategoryChange = (index, category) => {
-    setFiles(
-      files.map((file, i) => (i === index ? { ...file, category } : file))
-    );
-  };
-
+  // Dropzone configuration
   const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
+    onDrop: (acceptedFiles) => {
+      setFiles((prevFiles) => [
+        ...prevFiles,
+        ...acceptedFiles.map((file) => ({
+          file,
+          preview: file.type.startsWith("image")
+            ? URL.createObjectURL(file)
+            : null,
+          name: file.name,
+          size: (file.size / 1024).toFixed(2) + " KB",
+          category: "", // To be selected by the user
+          progress: 0,
+          expiryDate: "", // Captured per file
+        })),
+      ]);
+    },
     multiple: true,
   });
 
+  // Remove a file at a given index
+  const handleRemoveFile = (index) => {
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
+
+  // Update file category for a given file
+  const handleCategoryChange = (index, category) => {
+    setFiles((prevFiles) =>
+      prevFiles.map((file, i) =>
+        i === index ? { ...file, category } : file
+      )
+    );
+  };
+
+  // Simulated progress update for UI feedback
   const startUpload = (index) => {
     let progress = 0;
     const interval = setInterval(() => {
@@ -94,16 +109,67 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
     });
   }, [files]);
 
+  // Sequentially upload each file to the service
+  const handleSave = async () => {
+    setErrorMsg("");
+    for (let i = 0; i < files.length; i++) {
+      const currentFile = files[i];
+      try {
+        // Convert file to base64
+        const base64Data = await readFileAsBase64(currentFile.file);
+
+        // Build payload for SOAP service.
+        // Combining selectedDocument details with file-specific data.
+        const payload = {
+          REF_SEQ_NO: selectedDocument.REF_SEQ_NO, // From parent document
+          SERIAL_NO: i + 1, // Sequential number per file
+          DOCUMENT_NO: selectedDocument.DOCUMENT_NO || "",
+          DOCUMENT_DESCRIPTION: selectedDocument.DOCUMENT_DESCRIPTION || "",
+          DOC_SOURCE_FROM: selectedDocument.DOC_SOURCE_FROM || "",
+          DOC_RELATED_TO: selectedDocument.DOC_RELATED_TO || "",
+          DOC_RELATED_CATEGORY: selectedDocument.DOC_RELATED_CATEGORY || "",
+          DOC_REF_VALUE: selectedDocument.DOC_REF_VALUE || "",
+          USER_NAME: selectedDocument.USER_NAME || "",
+          COMMENTS: selectedDocument.COMMENTS || "",
+          DOC_TAGS: selectedDocument.DOC_TAGS || "",
+          FOR_THE_USERS: selectedDocument.FOR_THE_USERS || "",
+          EXPIRY_DATE: currentFile.expiryDate || "", // File-specific expiry date
+          DOC_DATA: base64Data, // Base64 encoded file content
+          DOC_NAME: currentFile.name,
+          DOC_EXT: currentFile.name.split(".").pop(),
+          FILE_PATH: "", // Populate if needed
+        };
+
+        // Call the SOAP service for this file's details
+        const response = await createAndSaveDMSDetails(payload);
+        console.log(
+          `File ${currentFile.name} uploaded successfully.`,
+          response
+        );
+      } catch (error) {
+        console.error(`Error uploading file ${currentFile.name}:`, error);
+        setErrorMsg(`Error uploading file ${currentFile.name}: ${error.message}`);
+        // Optionally break to stop further uploads
+        break;
+      }
+    }
+    // If all files processed without error, reset and close modal
+    if (!errorMsg) {
+      setFiles([]);
+      modalRef.current?.close();
+    }
+  };
+
   return (
     <>
       <dialog ref={modalRef} id="document_attachment" className="modal">
         <div className="modal-box w-11/12 max-w-5xl">
-          <form method="dialog">
-            {/* if there is a button in form, it will close the modal */}
-            <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-              ✕
-            </button>
-          </form>
+          <button
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            onClick={() => modalRef.current.close()}
+          >
+            <X />
+          </button>
           <h3 className="font-bold text-lg">Add Documents</h3>
           <div className="divider"></div>
 
@@ -111,16 +177,22 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
             <h6 className="flex items-center gap-2 font-semibold">
               Reference No:
               <span className="badge badge-primary">
-                {selectedDocument.REF_SEQ_NO}
+                {selectedDocument?.REF_SEQ_NO}
               </span>
             </h6>
             <h6 className="flex items-center gap-2 font-semibold">
               Document Name:
               <span className="badge badge-primary">
-                {selectedDocument.DOCUMENT_DESCRIPTION}
+                {selectedDocument?.DOCUMENT_DESCRIPTION}
               </span>
             </h6>
           </div>
+
+          {errorMsg && (
+            <div className="alert alert-error mb-3">
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
           <div className="p-4 border-dashed border-2 border-gray-300 rounded-lg mb-3">
             <div {...getRootProps()} className="p-4 text-center cursor-pointer">
@@ -147,7 +219,7 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
                       <div className="flex items-center gap-2">
                         {file.preview && (
                           <div className="mask mask-squircle w-8">
-                            <img src={file.preview} />
+                            <img src={file.preview} alt="preview" />
                           </div>
                         )}
                         <div className="flex-1 flex-col">
@@ -157,11 +229,12 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
                           </span>
                         </div>
                       </div>
+
                       <div className="flex flex-col items-center gap-2 w-full">
                         <div className="w-full">
                           <div className="flex items-center gap-1 mb-2">
                             <FileType2 className="h-4 w-4" />
-                            <label htmlFor="DOCUMENT_NO" className="text-xs">
+                            <label htmlFor={`document_type_${index}`} className="text-xs">
                               Document Type
                             </label>
                           </div>
@@ -175,25 +248,37 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
                             <option disabled value="">
                               Select Type
                             </option>
-                            <option value="ID Proof">ID Proof</option>
-                            <option value="Resume">Resume</option>
-                            <option value="Certificate">Certificate</option>
-                            <option value="Other">Other</option>
+                            {categoryData.map((category) => (
+                              <option
+                                key={uuidv4()}
+                                value={category.CATEGORY_NAME}
+                              >
+                                {category.CATEGORY_NAME}
+                              </option>
+                            ))}
                           </select>
                         </div>
 
                         <div className="w-full">
                           <div className="flex items-center gap-1 mb-2">
                             <CalendarDays className="h-4 w-4" />
-                            <label htmlFor="DOCUMENT_NO" className="text-xs">
+                            <label htmlFor={`expiry_${index}`} className="text-xs">
                               Document Expiry Date
                             </label>
                           </div>
                           <input
                             type="date"
-                            name="DOCUMENT_NO"
-                            id="DOCUMENT_NO" // Added id
-                            placeholder="Enter document ref no"
+                            name={`expiry_${index}`}
+                            id={`expiry_${index}`}
+                            value={file.expiryDate}
+                            onChange={(e) => {
+                              const newDate = e.target.value;
+                              setFiles((prevFiles) =>
+                                prevFiles.map((f, i) =>
+                                  i === index ? { ...f, expiryDate: newDate } : f
+                                )
+                              );
+                            }}
                             className="input input-bordered input-sm w-full bg-neutral text-neutral-content"
                           />
                         </div>
@@ -220,19 +305,18 @@ const DocumentUpload = ({ modalRef, selectedDocument }) => {
           )}
 
           <div className="modal-action">
-            <form method="dialog">
-              <div className="flex justify-end gap-4">
-                {/* if there is a button in form, it will close the modal */}
-                <button className="btn">Close</button>
-                <button
-                  className="btn btn-success"
-                  onClick={handleSave}
-                  disabled={files.length === 0}
-                >
-                  Save
-                </button>
-              </div>
-            </form>
+            <div className="flex justify-end gap-4">
+              <button className="btn" onClick={() => modalRef.current.close()}>
+                Close
+              </button>
+              <button
+                className="btn btn-success"
+                onClick={handleSave}
+                disabled={files.length === 0}
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       </dialog>

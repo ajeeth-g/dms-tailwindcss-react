@@ -1,7 +1,6 @@
 import axios from "axios";
-import doConnection from "./doConnection"; // Import doConnection function
 
-const createTask = async ({
+export const createTask = async ({
   UserName,
   Subject,
   Details,
@@ -11,11 +10,10 @@ const createTask = async ({
   StartDate,
   CompDate,
   RemindTheUserOn,
-  userName = "gopi@demo.com",
 }) => {
   try {
     // Step 1: Establish Connection
-    const connectionStatus = await doConnection(userName);
+    const connectionStatus = await doConnection();
 
     if (connectionStatus !== "SUCCESS") {
       console.error("❌ Connection failed. Task creation aborted.");
@@ -61,5 +59,3 @@ const createTask = async ({
     return null;
   }
 };
-
-export default createTask;

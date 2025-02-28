@@ -1,177 +1,163 @@
-import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, UserPen } from "lucide-react";
+import { FileText, View } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { getAllUsers } from "../api/getAllUsers";
+import { formatDateTime } from "../utils/dateUtils";
 import TaskForm from "./TaskForm";
 import Button from "./common/Button";
-import getAllUsers from "../services/employeeService";
-
-const documents = [
-  { id: 1, name: "Project Plan", branch: "HR", dueDate: "2025-02-28" },
-  {
-    id: 2,
-    name: "Financial Report",
-    branch: "Finance",
-    dueDate: "2025-03-05",
-  },
-  { id: 3, name: "Policy Update", branch: "Legal", dueDate: "2025-03-10" },
-  { id: 4, name: "Pan Update", branch: "Legal", dueDate: "2025-03-10" },
-];
-
-const employees = [
-  {
-    id: 1,
-    name: "ANEES",
-    image: "https://randomuser.me/api/portraits/men/45.jpg",
-  },
-  {
-    id: 2,
-    name: "GOPI",
-    image: "https://randomuser.me/api/portraits/women/48.jpg",
-  },
-  {
-    id: 3,
-    name: "MUBARAK",
-    image: "https://randomuser.me/api/portraits/men/50.jpg",
-  },
-];
+import { getDataModel } from "../services/dataService";
+import LoadingSpinner from "./common/LoadingSpinner";
 
 export default function TaskAssignment() {
-  const taskFormRef = useRef(null);
-  const [assignments, setAssignments] = useState({});
+  // States for SOAP parameters (if needed for re-fetching)
+  const [dataModelName] = useState("SYNM_DMS_MASTER");
+  const [whereCondition] = useState("");
+  const [orderby] = useState("");
+
+  // Data & loading/error states
+  const [docsData, setDocsData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
+
+  // State for selected document (for modal editing)
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const modalRef = useRef(null);
+
+  // Fetch the data model on component mount
+  useEffect(() => {
+    const fetchDmsDetailsDataModel = async () => {
+      setLoading(true);
+      try {
+        const response = await getDataModel({
+          dataModelName,
+          whereCondition,
+          orderby,
+        });
+        setDocsData(response);
+
+        console.log(response);
+
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data model:", err);
+        setError(err.message || "Error fetching data");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDmsDetailsDataModel();
+  }, [dataModelName, whereCondition, orderby]);
+
+  // State for task form data
   const [taskData, setTaskData] = useState({
+    taskName: "Project Plan",
     taskSubject: "",
-    taskName: "",
-    relatedTo: "",
+    relatedTo: "HR",
     assignedTo: "",
-    creatorReminderOn: new Date().toISOString().slice(0, 16),
-    assignedDate: new Date().toISOString().slice(0, 16),
-    targetDate: new Date(Date.now() + 86400000).toISOString().slice(0, 16), // Adds 1 day
-    remindOnDate: new Date().toISOString().slice(0, 16),
-    responseMessage: "",
+    creatorReminderOn: formatDateTime(new Date()),
+    assignedDate: formatDateTime(new Date()),
+    targetDate: formatDateTime(new Date(Date.now() + 86400000)), // 1 day from now
+    remindOnDate: formatDateTime(new Date()),
   });
 
   const handleEmployeeSelect = (event, docId) => {
+    console.log(event, docId);
+
     const { name, value } = event.target;
 
-    // Update task data without overwriting existing state
+    // Update taskData without overwriting the whole state
     setTaskData((prev) => ({
-      ...prev, // Keep previous state values
+      ...prev,
       [name]: value,
     }));
 
-    const selectedEmployee = employees.find(
-      (emp) => emp.id === parseInt(event.target.value)
+    // Get the selected employee from the users list
+    const selectedEmployee = users.find(
+      (emp) => String(emp.user_name) === value
     );
 
-    const doc = documents.find((d) => d.id === docId);
-
-    if (selectedEmployee && doc) {
-      const updatedTaskData = {
-        taskName: doc.name,
-        assignedDate: doc.dueDate,
-        selectedEmployee: selectedEmployee.name,
-      };
-
-      // Update taskData immediately
-      setTaskData(updatedTaskData);
-
-      setAssignments((prev) => ({
-        ...prev,
-        [docId]: selectedEmployee,
-      }));
-
-      taskFormRef.current?.openModal({
-        documentName: doc.name,
-        dueDate: doc.dueDate,
-        selectedEmployee: selectedEmployee.name,
-      });
+    if (modalRef.current) {
+      modalRef.current.showModal();
+    } else {
+      console.error("Modal element not found");
     }
   };
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const userData = await getAllUsers("gopi@demo.com");
+      const userData = await getAllUsers();
       if (userData) setUsers(userData);
     };
     fetchUsers();
-  }, []);
+  }, []); // Run only once when the component mounts
 
-  // Function to update taskData from child
+  // Function to update taskData from child components (if needed)
   const handleTaskChange = (e) => {
     const { name, value } = e.target;
     setTaskData((prev) => ({
       ...prev,
-      [name]: value, // Update the corresponding field in taskData
+      [name]: value,
     }));
   };
 
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {documents.map((doc) => (
-          <motion.div
-            key={doc.id}
-            className="bg-gray-800 bg-opacity-50 shadow-lg rounded-xl p-6 border border-gray-700"
-            whileHover={{ scale: 1.05 }}
-          >
-            <div className="flex items-center gap-2">
-              <FileText className="w-14 h-14 text-blue-400" />
-              <div>
-                <h3 className="text-xl font-medium">{doc.name}</h3>
-                <p className="text-xs text-gray-400">{doc.branch} Department</p>
-                <p className="text-xs text-gray-400">Due: {doc.dueDate}</p>
+        {loading ? (
+          <div className="grid grid-cols-12 gap-4 place-items-center">
+            <LoadingSpinner className="loading loading-dots loading-md" />
+          </div>
+        ) : (
+          docsData.map((doc) => (
+            <motion.div
+              key={uuidv4()}
+              className="bg-gradient-to-t from-gray-800 to-gray-900 shadow-lg rounded-2xl p-6 border border-gray-700"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="flex items-center gap-2">
+                <FileText className="w-14 h-14 text-blue-400" />
+                <div>
+                  <h3 className="text-xl font-medium">
+                    {doc.DOCUMENT_DESCRIPTION}
+                  </h3>
+                  <p className="text-xs text-gray-400">{doc.USER_NAME}</p>
+                  <p className="text-xs text-gray-400">
+                    Due: {doc.EXPIRY_DATE}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-3">
-              {!assignments[doc.id] ? (
+              <div className="grid grid-cols-2 items-center gap-2 mt-4">
+                <Button
+                  className="btn btn-neutral btn-sm"
+                  icon={<View className="h-4 w-4" />}
+                  label="View Docs"
+                />
                 <select
-                  className="select select-bordered select-sm w-full mt-2"
-                  onChange={(event) => handleEmployeeSelect(event, doc.id)}
+                  name="assignedTo"
+                  className="select select-bordered select-sm text-center"
+                  onChange={(event) => handleEmployeeSelect(event, uuidv4())}
+                  defaultValue=""
                 >
-                  <option value="" disabled>
-                    Assign to...
+                  <option className="ml-5" value="" disabled>
+                    Assign
                   </option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
+                  {users.map((user) => (
+                    <option key={uuidv4()} value={user.user_name}>
+                      {user.user_name}
                     </option>
                   ))}
                 </select>
-              ) : (
-                <div className="flex items-center justify-between gap-3 p-3 border border-gray-700 rounded-lg bg-gray-900 shadow-md">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={assignments[doc.id].image}
-                      alt="Assigned Employee"
-                      className="w-8 h-8 rounded-full border border-gray-600"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-gray-300">
-                        {assignments[doc.id].name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Due: {doc.dueDate}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    className="btn btn-success btn-sm"
-                    icon={<UserPen className="h-4 w-4" />}
-                    label="Edit"
-                  />
-                </div>
-              )}
-            </div>
-          </motion.div>
-        ))}
+              </div>
+            </motion.div>
+          ))
+        )}
       </div>
 
-      {/* Single TaskForm outside the loop */}
       <TaskForm
-        ref={taskFormRef}
+        modalRef={modalRef}
         data={taskData}
         onTaskChange={handleTaskChange}
       />

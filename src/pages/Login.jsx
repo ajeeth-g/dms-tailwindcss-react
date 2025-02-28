@@ -3,18 +3,17 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const Login = ({ setUser }) => {
-  const { setUserDetails } = useAuth();
-  const [email, setEmail] = useState("demo@istreams.com");
+const Login = () => {
+  const [email, setEmail] = useState("gopi@demo.com");
   const [password, setPassword] = useState("pass@123");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email === "demo@istreams.com" && password === "pass@123") {
-      setUserDetails(email, password);
-      setUser(true);
+    if (email === "gopi@demo.com" && password === "pass@123") {
+      login(email);
       navigate("/");
     } else {
       alert("Invalid credentials!");

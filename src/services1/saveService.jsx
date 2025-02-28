@@ -25,6 +25,7 @@ export const saveService = async (formattedData) => {
     });
 
     const textResponse = await response.text();
+    console.log(textResponse);
 
     return textResponse; // XML response
   } catch (error) {

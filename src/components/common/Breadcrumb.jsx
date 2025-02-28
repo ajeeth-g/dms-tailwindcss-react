@@ -22,14 +22,14 @@ const Breadcrumb = () => {
   };
 
   return (
-    <div className="flex items-end justify-between w-full mb-6">
+    <div className="flex items-end justify-between mb-6">
       <h1 className="text-3xl font-medium">
-        {location.pathname.split("/").pop() || "Home"}
+        {location.pathname.split("/").pop() || "Dashboard"}
       </h1>
       <div className="breadcrumbs text-sm">
         <ul className="flex gap-2">
           <li>
-            <Link to="/">Home</Link>
+            <Link to="/">Dashboard</Link>
           </li>
           {generateBreadcrumbs()}
         </ul>

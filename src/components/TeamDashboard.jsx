@@ -52,7 +52,7 @@ const COLORS = ["#10B981", "#EF4444"]; // Green: Completed, Red: Pending
 
 export default function CompactDMSDashboard() {
   return (
-    <div className="bg-gray-900 bg-opacity-40 backdrop-blur-lg shadow-md rounded-2xl p-6 border border-gray-700">
+    <div className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg rounded-2xl p-6 border border-gray-700">
       <div className="flex items-center justify-between gap-2 mb-8">
         <h2 className="text-lg font-semibold text-white">My Team</h2>
         <SearchInput />

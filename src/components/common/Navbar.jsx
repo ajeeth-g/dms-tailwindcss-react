@@ -5,16 +5,25 @@ import {
   CloudMoon,
   Maximize,
   Minimize,
-  FilePlus2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import Button from "./Button";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { getNameFromEmail } from "../../utils/emailHelpers";
 
 const Navbar = ({ toggleSidebar }) => {
+  const { email, logout } = useAuth();
+  const UserName = getNameFromEmail(email);
+  const navigate = useNavigate();
   const [theme, settheme] = React.useState(
     localStorage.getItem("theme") ? localStorage.getItem("theme") : "cmyk"
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+    const localTheme = localStorage.getItem("theme");
+    document.querySelector("html").setAttribute("data-theme", localTheme);
+  }, [theme]);
 
   const handleToggle = (e) => {
     if (e.target.checked) {
@@ -23,12 +32,6 @@ const Navbar = ({ toggleSidebar }) => {
       settheme("cmyk");
     }
   };
-
-  useEffect(() => {
-    localStorage.setItem("theme", theme);
-    const localTheme = localStorage.getItem("theme");
-    document.querySelector("html").setAttribute("data-theme", localTheme);
-  }, [theme]);
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -42,8 +45,13 @@ const Navbar = ({ toggleSidebar }) => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
-    <div className="navbar bg-base-300 text-base-content">
+    <nav className="navbar bg-base-300 text-base-content">
       <div className="navbar-start">
         <button className="btn btn-ghost btn-circle" onClick={toggleSidebar}>
           <AlignLeft />
@@ -96,8 +104,8 @@ const Navbar = ({ toggleSidebar }) => {
             </div>
 
             <div className="flex flex-col items-start">
-              <span className="text-lg font-semibold">Gopi</span>
-              <span className="text-xs text-gray-400">gopi@demo.com</span>
+              <span className="text-lg font-semibold">{UserName}</span>
+              <span className="text-xs text-gray-400">{email}</span>
             </div>
           </div>
 
@@ -112,15 +120,15 @@ const Navbar = ({ toggleSidebar }) => {
               </a>
             </li>
             <li>
-              <a>Settings</a>
+              <button>Settings</button>
             </li>
             <li>
-              <a>Logout</a>
+              <button onClick={handleLogout}>Logout</button>
             </li>
           </ul>
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
 

@@ -1,26 +1,38 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 // Create the context
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 // Create the provider component
 export const AuthProvider = ({ children }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [domain, setDomain] = useState("");
+  const [email, setEmail] = useState(null);
 
-  const setUserDetails = (email, password) => {
-    setEmail(email);
-    setPassword(password);
+  // On mount, load the user from localStorage if available.
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setEmail(parsedUser.email); // Extract email from object
+      } catch (error) {
+        console.error("Error parsing stored user:", error);
+      }
+    }
+  }, []);
 
-    // Extract domain from email
-    const extractedDomain = email.split("@")[1];
-    
-    setDomain(extractedDomain);
+  const login = (userEmail) => {
+    const userData = { email: userEmail };
+    setEmail(userEmail);
+    localStorage.setItem("user", JSON.stringify(userData)); // Store as JSON object
+  };
+
+  const logout = () => {
+    setEmail(null);
+    localStorage.removeItem("user");
   };
 
   return (
-    <AuthContext.Provider value={{ email, password, domain, setUserDetails }}>
+    <AuthContext.Provider value={{ email, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -28,3 +40,16 @@ export const AuthProvider = ({ children }) => {
 
 // Custom hook to use the AuthContext
 export const useAuth = () => useContext(AuthContext);
+
+// Helper function to get the current user's email from localStorage.
+export const getUserEmail = () => {
+  const storedUser = localStorage.getItem("user");
+  if (storedUser) {
+    try {
+      return JSON.parse(storedUser).email; // Extract email safely
+    } catch (error) {
+      console.error("Error parsing stored user:", error);
+    }
+  }
+  return null;
+};

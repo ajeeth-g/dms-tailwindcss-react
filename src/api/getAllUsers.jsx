@@ -1,10 +1,13 @@
 import axios from "axios";
-import doConnection from "./doConnection"; // Import doConnection function
+import { getUserEmail } from "../context/AuthContext";
+import { doConnection } from "./doConnection";
 
-const getAllUsers = async (userName = "gopi@demo.com") => {
+export const getAllUsers = async () => {
+  const email = getUserEmail();
+
   try {
     // Step 1: Establish Connection
-    const connectionStatus = await doConnection(userName);
+    const connectionStatus = await doConnection();
 
     if (connectionStatus !== "SUCCESS") {
       console.error("❌ Connection failed. Unable to fetch users.");
@@ -19,7 +22,7 @@ const getAllUsers = async (userName = "gopi@demo.com") => {
         <soapenv:Header/>
         <soapenv:Body>
           <web:IM_Get_All_Users>
-            <web:UserName>${userName}</web:UserName>
+            <web:UserName>${email}</web:UserName>
           </web:IM_Get_All_Users>
         </soapenv:Body>
       </soapenv:Envelope>
@@ -62,5 +65,3 @@ const getAllUsers = async (userName = "gopi@demo.com") => {
     return null;
   }
 };
-
-export default getAllUsers;

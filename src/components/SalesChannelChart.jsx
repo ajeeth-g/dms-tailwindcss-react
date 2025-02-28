@@ -18,13 +18,13 @@ const SALES_CHANNEL_DATA = [
   { name: "TRI Chennai", channels: 38200 },
   { name: "TRI KSA", channels: 29800 },
   { name: "TRI Qatar", channels: 29800 },
-  { name: "TRI CMIS", channels: 18700 },
+  { name: "CMIS", channels: 35700 },
 ];
 
 const SalesChannelChart = () => {
   return (
     <motion.div
-      className="bg-gray-900 bg-opacity-40 backdrop-blur-lg shadow-md rounded-2xl p-6 border border-gray-700"
+      className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg rounded-2xl p-6 border border-gray-700"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
@@ -32,7 +32,7 @@ const SalesChannelChart = () => {
       <h2 className="text-lg font-medium mb-4 text-gray-100">
         Documents by channel
       </h2>
-      <div className="h-80">
+      <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
           <BarChart data={SALES_CHANNEL_DATA}>
             <CartesianGrid strokeDasharray="3 3" stroke="#4B5563" />
