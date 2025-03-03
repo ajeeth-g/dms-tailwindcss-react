@@ -17,24 +17,35 @@ export const createSoapEnvelope = (method, params = {}) => {
     `;
 };
 
-// Helper: Parse the SOAP XML response to extract the JSON result.
-export const parseDataModelResponse = (soapResponse) => {
+// Helper: Parse the SOAP XML response by locating the expected tag (or tagResult).
+export const parseDataModelResponse = (soapResponse, tagName) => {
   try {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(soapResponse, "text/xml");
-    // Locate the node containing the result.
-    const resultNode = xmlDoc.getElementsByTagName(
-      "DataModel_GetDataResult"
-    )[0];
+    let resultNode;
+    // Try to locate a tag that is either <tagName> or <tagNameResult>
+    const allElements = xmlDoc.getElementsByTagName("*");
+    for (let i = 0; i < allElements.length; i++) {
+      if (
+        allElements[i].localName === `${tagName}Result` ||
+        allElements[i].localName === tagName
+      ) {
+        resultNode = allElements[i];
+        break;
+      }
+    }
     if (resultNode) {
-      const jsonStr = resultNode.textContent;
-      // Parse the JSON string into an array.
-      return JSON.parse(jsonStr);
+      const result = resultNode.textContent.trim();
+      // If the result looks like JSON, parse it.
+      if (result.startsWith("{") || result.startsWith("[")) {
+        return JSON.parse(result);
+      }
+      return result;
     }
   } catch (e) {
     console.error("Error parsing SOAP response:", e);
   }
-  return [];
+  return null;
 };
 
 // Helper function to parse the service date format

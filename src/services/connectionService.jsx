@@ -1,13 +1,20 @@
-import { getUserEmail } from "../context/AuthContext";
-import { createSoapEnvelope } from "../utils/soapUtils";
-import { connectionPayload } from "./payloadBuilders";
+// src/services/connectionService.js
+import { createSoapEnvelope, parseDataModelResponse } from "../utils/soapUtils";
 import soapClient from "./soapClient";
 
-const SOAP_URL = "/api";
+// Helper: Use proxy endpoint for development if the dynamic URL is the known external one.
+const getEndpoint = (dynamicURL) => {
+  if (
+    process.env.NODE_ENV === "development" &&
+    dynamicURL &&
+    dynamicURL.includes("103.168.19.35")
+  ) {
+    return "/api"; // Use the proxy endpoint defined in vite.config.js
+  }
+  return dynamicURL;
+};
 
-export const doConnection = async () => {
-  const loginUserName = getUserEmail();
-
+export const doConnection = async (endpoint = "/api", loginUserName) => {
   if (!loginUserName) {
     console.error(
       "❌ Login user name is required for doConnection authentication."
@@ -15,8 +22,12 @@ export const doConnection = async () => {
     return "ERROR";
   }
 
+  const finalEndpoint = getEndpoint(endpoint);
   const SOAP_ACTION = "http://tempuri.org/doConnection";
-  const payload = connectionPayload(loginUserName);
+  // Using your connectionPayload builder
+  const payload = { LoginUserName: loginUserName }; // or use connectionPayload(loginUserName) if defined
   const soapBody = createSoapEnvelope("doConnection", payload);
-  return soapClient(SOAP_URL, SOAP_ACTION, soapBody);
+  const responseText = await soapClient(finalEndpoint, SOAP_ACTION, soapBody);
+  const result = parseDataModelResponse(responseText, "doConnection");
+  return result;
 };

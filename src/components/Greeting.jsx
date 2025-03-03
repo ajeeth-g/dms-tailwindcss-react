@@ -1,10 +1,12 @@
 import React from "react";
 import { getNameFromEmail } from "../utils/emailHelpers";
 import { useAuth } from "../context/AuthContext";
+import { hexToBase64 } from "../utils/hexToBase64";
 
 const Greeting = () => {
-  const { email } = useAuth();
-  const UserName = getNameFromEmail(email);
+  const { auth, userData } = useAuth();
+
+  const UserName = getNameFromEmail(auth.email);
 
   const currentDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -13,13 +15,17 @@ const Greeting = () => {
     year: "numeric",
   });
 
+  const imageSrc = userData.Current_User_ImageData
+    ? `data:image/bmp;base64,${hexToBase64(userData.Current_User_ImageData)}`
+    : "https://via.placeholder.com/150";
+
   return (
     <div className="flex items-center gap-4 p-7 rounded-2xl shadow-lg border border-gray-700">
       {/* Avatar Section */}
       <div className="w-20 h-20 rounded-full overflow-hidden shadow-md border-2 border-gray-700">
         <img
           alt="User Avatar"
-          src="https://www.shutterstock.com/image-photo/head-shot-portrait-close-smiling-600nw-1714666150.jpg"
+          src={imageSrc}
           className="w-full h-full object-cover"
         />
       </div>

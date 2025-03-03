@@ -9,10 +9,11 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getNameFromEmail } from "../../utils/emailHelpers";
+import { hexToBase64 } from "../../utils/hexToBase64";
 
 const Navbar = ({ toggleSidebar }) => {
-  const { email, logout } = useAuth();
-  const UserName = getNameFromEmail(email);
+  const { auth, userData, logout } = useAuth();
+  const UserName = getNameFromEmail(auth.email);
   const navigate = useNavigate();
   const [theme, settheme] = React.useState(
     localStorage.getItem("theme") ? localStorage.getItem("theme") : "cmyk"
@@ -49,6 +50,12 @@ const Navbar = ({ toggleSidebar }) => {
     logout();
     navigate("/login");
   };
+
+   // Determine the image source.
+  // If userData.Current_User_ImageData exists, convert it from hex to Base64 and use the BMP MIME type.
+  const imageSrc = userData.Current_User_ImageData
+    ? `data:image/bmp;base64,${hexToBase64(userData.Current_User_ImageData)}`
+    : "https://via.placeholder.com/150";
 
   return (
     <nav className="navbar bg-base-300 text-base-content">
@@ -98,14 +105,14 @@ const Navbar = ({ toggleSidebar }) => {
               <div className="w-10 h-10 rounded-full">
                 <img
                   alt="Tailwind CSS Navbar component"
-                  src="https://www.shutterstock.com/image-photo/head-shot-portrait-close-smiling-600nw-1714666150.jpg"
+                  src={imageSrc}
                 />
               </div>
             </div>
 
             <div className="flex flex-col items-start">
               <span className="text-lg font-semibold">{UserName}</span>
-              <span className="text-xs text-gray-400">{email}</span>
+              <span className="text-xs text-gray-400">{auth.email}</span>
             </div>
           </div>
 

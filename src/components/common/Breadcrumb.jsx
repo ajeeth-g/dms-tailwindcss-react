@@ -4,6 +4,15 @@ import { Link, useLocation } from "react-router-dom";
 const Breadcrumb = () => {
   const location = useLocation();
 
+  // Define custom names for specific routes
+  const breadcrumbNames = {
+    "document-list": "Document List",
+    "user-profile": "User Profile",
+    settings: "Settings",
+    reports: "Reports",
+    // Add more as needed
+  };
+
   // Function to generate breadcrumb items from the current path
   const generateBreadcrumbs = () => {
     const paths = location.pathname.split("/").filter((path) => path);
@@ -13,9 +22,16 @@ const Breadcrumb = () => {
       pathUrl += `/${path}`;
       const isLast = index === paths.length - 1;
 
+      // Check if a custom name exists, otherwise use the original path
+      const breadcrumbName = breadcrumbNames[path] || path.replace("-", " ");
+
       return (
         <li key={path}>
-          {!isLast ? <Link to={pathUrl}>{path}</Link> : <span>{path}</span>}
+          {!isLast ? (
+            <Link to={pathUrl}>{breadcrumbName}</Link>
+          ) : (
+            <span>{breadcrumbName}</span>
+          )}
         </li>
       );
     });
@@ -24,7 +40,9 @@ const Breadcrumb = () => {
   return (
     <div className="flex items-end justify-between mb-6">
       <h1 className="text-3xl font-medium">
-        {location.pathname.split("/").pop() || "Dashboard"}
+        {breadcrumbNames[location.pathname.split("/").pop()] ||
+          location.pathname.split("/").pop()?.replace("-", " ") ||
+          "Dashboard"}
       </h1>
       <div className="breadcrumbs text-sm">
         <ul className="flex gap-2">

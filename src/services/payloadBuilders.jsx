@@ -83,3 +83,13 @@ export const getUserTasksPayload = ({ userName }) => ({
 export const getEmployeePicturePayload = ({ empNo }) => ({
   EmpNo: empNo, // string
 });
+
+// Payload for getEmployeeNameAndIdPayload
+export const getEmployeeNameAndIdPayload = (userfirstname) => ({
+  userfirstname: userfirstname,
+});
+
+// Payload for getEmployeeImage
+export const getEmployeeImagePayload = (empNo) => ({
+  EmpNo: empNo,
+});

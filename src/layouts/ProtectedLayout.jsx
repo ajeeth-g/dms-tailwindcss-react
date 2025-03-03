@@ -1,12 +1,13 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { getUserEmail } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import Layout from "./Layout";
 
 const ProtectedLayout = () => {
-  const email = getUserEmail();
+  const { auth } = useAuth();
 
-  if (!email) {
+  // If no token or email exists, user is not authenticated
+  if (!auth?.token || !auth?.email) {
     return <Navigate to="/login" replace />;
   }
   return <Layout />;

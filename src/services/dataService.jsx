@@ -3,13 +3,30 @@ import { createSoapEnvelope, parseDataModelResponse } from "../utils/soapUtils";
 import { getDataModelPayload } from "./payloadBuilders";
 import { doConnection } from "./connectionService";
 
-const SOAP_URL = "/api";
+// Helper: Use proxy endpoint if in development.
+const getEndpoint = (dynamicURL) => {
+  if (
+    process.env.NODE_ENV === "development" &&
+    dynamicURL &&
+    dynamicURL.includes("103.168.19.35")
+  ) {
+    return "/api";
+  }
+  return dynamicURL;
+};
 
-export const getDataModel = async (para) => {
+const DEFAULT_SOAP_URL = "/api";
+
+export const getDataModel = async (
+  para,
+  email,
+  dynamicURL = DEFAULT_SOAP_URL
+) => {
+  const endpoint = getEndpoint(dynamicURL);
   // Build the payload dynamically using the builder function
   const payload = getDataModelPayload(para);
 
-  const doConnectionResponse = await doConnection();
+  const doConnectionResponse = await doConnection(endpoint, email);
   if (doConnectionResponse === "ERROR") {
     throw new Error("Connection failed: Unable to authenticate.");
   }
@@ -17,8 +34,10 @@ export const getDataModel = async (para) => {
   const SOAP_ACTION = "http://tempuri.org/DataModel_GetData";
   const soapBody = createSoapEnvelope("DataModel_GetData", payload);
 
-  // Await the SOAP client call before parsing the response.
-  const soapResponse = await soapClient(SOAP_URL, SOAP_ACTION, soapBody);
-  const parsedResponse = parseDataModelResponse(soapResponse);
+  const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
+  const parsedResponse = parseDataModelResponse(
+    soapResponse,
+    "DataModel_GetData"
+  );
   return parsedResponse;
 };

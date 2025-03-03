@@ -1,28 +1,25 @@
-import { motion } from "framer-motion";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  CheckCircle,
-  ClipboardCheck,
-  FileText,
-  Loader,
-} from "lucide-react";
+import { useEffect } from "react";
 import AIPoweredInsights from "../components/AIPoweredInsights";
 import ChannelPerformance from "../components/ChannelPerformance";
 import DailyOrders from "../components/DailyOrders";
+import Greeting from "../components/Greeting";
 import OrderDistribution from "../components/OrderDistribution";
 import SalesChannelChart from "../components/SalesChannelChart";
-import TeamDashboard from "../components/TeamDashboard";
-import UploadDocumentPage from "./UploadDocumentPage";
-import { useEffect } from "react";
-import Greeting from "../components/Greeting";
 import StatCard from "../components/StatCard";
+import TeamDashboard from "../components/TeamDashboard";
 import { doConnection } from "../services/connectionService";
+import UploadDocumentPage from "./UploadDocumentPage";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
+  const { auth, userData } = useAuth();
+
   useEffect(() => {
     const establishDoConnection = async () => {
-      const doConnectionResult = await doConnection();
+      const doConnectionResult = await doConnection(
+        userData.ClientURL,
+        auth.email
+      );
     };
     establishDoConnection();
   }, []);

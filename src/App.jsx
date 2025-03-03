@@ -1,4 +1,4 @@
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import TaskAssignment from "./components/TaskAssignment";
 import ProtectedLayout from "./layouts/ProtectedLayout";
 import Dashboard from "./pages/Dashboard";
@@ -12,7 +12,7 @@ const App = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<ProtectedLayout />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="Upload" element={<UploadDocumentPage />} />
+        <Route path="document-list" element={<UploadDocumentPage />} />
         <Route path="Document" element={<TaskAssignment />} />
       </Route>
       <Route path="*" element={<NotFound />} />

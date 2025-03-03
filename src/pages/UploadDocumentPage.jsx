@@ -1,10 +1,12 @@
-import { FilePlus2, RefreshCcw } from "lucide-react";
+import { FilePlus2, RefreshCcw, SearchIcon } from "lucide-react";
 import { useRef, useState } from "react";
 import Button from "../components/common/Button";
 import DocumentForm from "../components/DocumentForm";
 import DocumentTable from "../components/DocumentTable";
 
 const UploadDocumentPage = () => {
+  const [globalFilter, setGlobalFilter] = useState("");
+
   const modalRef = useRef(null);
   const fetchDataRef = useRef(null);
 
@@ -12,9 +14,17 @@ const UploadDocumentPage = () => {
     <div className="grid grid-cols-1 gap-4">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
         <div className="md:col-span-9">
-          <div className="text-sm text-gray-700">
-            Total Documents: <span className="font-bold">22</span> Rows
-          </div>
+          {/* Global Search Box in the Parent */}
+          <label className="input input-bordered flex items-center gap-2">
+            <input
+              type="text"
+              className="grow"
+              placeholder="Global Search..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+            />
+            <SearchIcon className="w-4 h-4" />
+          </label>
         </div>
         <div className="md:col-span-3 flex justify-end gap-2">
           <Button
@@ -33,7 +43,11 @@ const UploadDocumentPage = () => {
         </div>
       </div>
 
-      <DocumentTable fetchDataRef={fetchDataRef} />
+      <DocumentTable
+        globalFilter={globalFilter}
+        setGlobalFilter={setGlobalFilter}
+        fetchDataRef={fetchDataRef}
+      />
 
       <DocumentForm modalRef={modalRef} />
     </div>

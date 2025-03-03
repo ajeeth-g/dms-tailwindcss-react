@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   Clock3,
+  FileQuestion,
   FileText,
   Folder,
   Hash,
@@ -11,31 +12,87 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "../context/AuthContext";
+import { getDataModel } from "../services/dataService";
 import { createAndSaveDMSMaster } from "../services/dmsService";
+import { getNameFromEmail } from "../utils/emailHelpers";
 import LoadingSpinner from "./common/LoadingSpinner";
 
-// Centralized initial form state
-const initialFormState = {
-  REF_SEQ_NO: -1,
-  DOCUMENT_NO: "",
-  DOCUMENT_DESCRIPTION: "",
-  DOC_SOURCE_FROM: "",
-  DOC_RELATED_TO: "",
-  DOC_RELATED_CATEGORY: "",
-  DOC_REF_VALUE: "",
-  USER_NAME: "",
-  COMMENTS: "", // Optional: Remarks
-  DOC_TAGS: "",
-  FOR_THE_USERS: "",
-  EXPIRY_DATE: "", // Optional: Expiry Date
-  REF_TASK_ID: 0,
-};
-
 const DocumentForm = ({ modalRef }) => {
+  const { auth } = useAuth();
+
+  const UserName = getNameFromEmail(auth.email);
+
+  // Centralized initial form state
+  const initialFormState = {
+    REF_SEQ_NO: -1,
+    DOCUMENT_NO: "",
+    DOCUMENT_DESCRIPTION: "",
+    DOC_SOURCE_FROM: "",
+    DOC_RELATED_TO: "",
+    DOC_RELATED_CATEGORY: "",
+    DOC_REF_VALUE: "",
+    USER_NAME: UserName.toUpperCase(),
+    COMMENTS: "", // Optional: Remarks
+    DOC_TAGS: "",
+    FOR_THE_USERS: "",
+    EXPIRY_DATE: "", // Optional: Expiry Date
+    REF_TASK_ID: 0,
+  };
+
   const [formData, setFormData] = useState(initialFormState);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categoryData, setCategoryData] = useState([]);
+  const [dmsMasterData, setDmsMasterData] = useState([]);
+
+  // Fetch category data on component mount
+  useEffect(() => {
+    const fetchCategoryDataModel = async () => {
+      try {
+        const response = await getDataModel(
+          {
+            dataModelName: "SYNM_DMS_DOC_CATEGORIES",
+            whereCondition: "",
+            orderby: "",
+          },
+          auth.email
+        );
+
+        // Ensure the data is an array.
+        let data = Array.isArray(response) ? response : response.data;
+        if (!Array.isArray(data)) {
+          data = [data];
+        }
+        setCategoryData(data);
+      } catch (err) {
+        console.error("Error fetching data model:", err);
+      }
+    };
+    fetchCategoryDataModel();
+  }, [auth.email]);
+
+  // Fetch category data on component mount
+  useEffect(() => {
+    const fetchDmsMasterDataModel = async () => {
+      try {
+        const response = await getDataModel(
+          {
+            dataModelName: "SYNM_DMS_MASTER",
+            whereCondition: "",
+            orderby: "",
+          },
+          auth.email
+        );
+        setDmsMasterData(response);
+      } catch (err) {
+        console.error("Error fetching data model:", err);
+      }
+    };
+    fetchDmsMasterDataModel();
+  }, []);
 
   // Validate required fields
   const validateForm = () => {
@@ -67,7 +124,7 @@ const DocumentForm = ({ modalRef }) => {
     }
     setIsSubmitting(true);
     try {
-      const response = await createAndSaveDMSMaster(formData);
+      const response = await createAndSaveDMSMaster(formData, auth.email);
       console.log("Server Response:", response);
       if (response) {
         // Reset form but retain the next reference number
@@ -119,6 +176,12 @@ const DocumentForm = ({ modalRef }) => {
                       <label htmlFor="DOCUMENT_NO" className="text-xs">
                         Document Ref No
                       </label>
+                      <div
+                        className="tooltip tooltip-right"
+                        data-tip="Internal reference number refers either Employee Name, Employee Number, or Project Code."
+                      >
+                        <FileQuestion className="w-4 h-4" />
+                      </div>
                     </div>
                     <input
                       type="text"
@@ -210,13 +273,11 @@ const DocumentForm = ({ modalRef }) => {
                       <option value="" disabled>
                         Select related category
                       </option>
-                      <option value="HRMS">HRMS</option>
-                      <option value="Passport">Passport</option>
-                      <option value="Visa">Visa</option>
-                      <option value="Supplier Invoice">Supplier Invoice</option>
-                      <option value="QS">QS</option>
-                      <option value="Credit Notes">Credit Notes</option>
-                      <option value="Sales Invoice">Sales Invoice</option>
+                      {categoryData.map((category) => (
+                        <option key={uuidv4()} value={category.CATEGORY_NAME}>
+                          {category.CATEGORY_NAME}
+                        </option>
+                      ))}
                     </select>
                     {errors.DOC_RELATED_CATEGORY && (
                       <p className="text-red-500 text-xs">
@@ -243,23 +304,42 @@ const DocumentForm = ({ modalRef }) => {
                     />
                   </div>
 
-                  {/* Remarks */}
+                  {/* Document Reference Value */}
                   <div className="flex flex-wrap items-center gap-3 w-full">
+                    <div className="flex items-center gap-1">
+                      <LocateFixed className="h-4 w-4" />
+                      <label htmlFor="DOC_REF_VALUE" className="text-xs">
+                        Document Reference Value
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      name="DOC_REF_VALUE"
+                      id="DOC_REF_VALUE"
+                      placeholder="Enter docs ref no"
+                      value={formData.DOC_REF_VALUE}
+                      onChange={handleChange}
+                      className="input input-bordered input-sm w-full"
+                    />
+                  </div>
+
+                  {/* Remarks */}
+                  <div className="flex flex-wrap items-center gap-3 w-full col-span-2">
                     <div className="flex items-center gap-1">
                       <MessageSquare className="h-4 w-4" />
                       <label htmlFor="COMMENTS" className="text-xs">
                         Remarks
                       </label>
                     </div>
-                    <input
+                    <textarea
                       type="text"
                       name="COMMENTS"
                       id="COMMENTS"
                       placeholder="Add remarks"
                       value={formData.COMMENTS}
                       onChange={handleChange}
-                      className="input input-bordered input-sm w-full"
-                    />
+                      className="textarea textarea-bordered textarea-xs w-full"
+                    ></textarea>
                   </div>
                 </div>
 
@@ -279,32 +359,26 @@ const DocumentForm = ({ modalRef }) => {
 
             {/* Right Side - Activity Section */}
             <div className="col-span-1 rounded-lg p-4 shadow-2xl max-h-[400px] overflow-y-auto min-h-0">
-              <h2 className="text-base font-medium mb-3">Others:</h2>
+              <h2 className="text-base font-medium mb-3">Others Details:</h2>
 
               {/* Fields Section */}
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3 w-full">
                   <div className="flex items-center gap-1 text-gray-500">
-                    <LocateFixed className="h-4 w-4" />
-                    <label className="text-sm">Document Received From</label>
-                  </div>
-                  <p className="text-sm font-medium">TRI Dubai</p>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 w-full">
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <LocateFixed className="h-4 w-4" />
-                    <label className="text-sm">Document Reference Value</label>
-                  </div>
-                  <p className="text-sm font-medium">TRI Dubai</p>
-                </div>
-
-                <div className="flex items-center justify-between gap-3 w-full">
-                  <div className="flex items-center gap-1 text-gray-500">
                     <UserRound className="h-4 w-4" />
                     <label className="text-sm">Uploader Name</label>
                   </div>
-                  <p className="text-sm font-medium">Aneesh</p>
+                  <p className="text-sm font-medium">{UserName}</p>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 w-full">
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <LocateFixed className="h-4 w-4" />
+                    <label className="text-sm">Document Received From</label>
+                  </div>
+                  <p className="text-sm font-medium">
+                    {dmsMasterData.DOC_SOURCE_FROM ? "" : "-"}
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 w-full">
@@ -312,7 +386,7 @@ const DocumentForm = ({ modalRef }) => {
                     <LocateFixed className="h-4 w-4" />
                     <label className="text-sm">Verified by</label>
                   </div>
-                  <p className="text-sm font-medium">Santhosh</p>
+                  <p className="text-sm font-medium">-</p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 w-full">
@@ -320,7 +394,7 @@ const DocumentForm = ({ modalRef }) => {
                     <Clock3 className="h-4 w-4" />
                     <label className="text-sm">Verified date</label>
                   </div>
-                  <p className="text-sm font-medium">TRI Dubai</p>
+                  <p className="text-sm font-medium">-</p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 w-full">
@@ -328,7 +402,7 @@ const DocumentForm = ({ modalRef }) => {
                     <LocateFixed className="h-4 w-4" />
                     <label className="text-sm">Reference Task ID</label>
                   </div>
-                  <p className="text-sm font-medium">#SPK-2212</p>
+                  <p className="text-sm font-medium">-</p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 w-full">
@@ -336,8 +410,8 @@ const DocumentForm = ({ modalRef }) => {
                     <Loader className="h-4 w-4" />
                     <label className="text-sm">Document Status</label>
                   </div>
-                  <p className="badge badge-success text-xs font-medium">
-                    Processing
+                  <p className="badge badge-error text-xs font-medium">
+                    Not Yet Started
                   </p>
                 </div>
               </div>
