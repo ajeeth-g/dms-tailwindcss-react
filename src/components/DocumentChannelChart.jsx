@@ -21,7 +21,7 @@ const SALES_CHANNEL_DATA = [
   { name: "CMIS", channels: 35700 },
 ];
 
-const SalesChannelChart = () => {
+const DocumentChannelChart = () => {
   return (
     <motion.div
       className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg rounded-2xl p-6 border border-gray-700"
@@ -61,4 +61,4 @@ const SalesChannelChart = () => {
   );
 };
 
-export default SalesChannelChart;
+export default DocumentChannelChart;

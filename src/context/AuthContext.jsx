@@ -1,34 +1,78 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 
 // Create the context
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState({ token: null, email: null });
-  const [userData, setUserData] = useState({
-    SrvURL: "http://103.168.19.35/iStWebPublic/iStreamsSmartPublic.asmx",
-    ClientURL: null,
-    doConnectionParameter: null,
-    Current_User_Login: null,
-    Current_User_Name: null,
-    Current_User_EmpNo: null,
-    Current_User_EmpName: null,
-    Current_User_ImageData: null,
-    Client_Username: null,
-    SelectedDashBoardID: null,
-    SelectedDashBoardPage: null,
-    SelectedDashBoardModule: null,
-    CompanyCode: "1",
-    BranchCode: "1",
+  // Initialize auth state from localStorage (if available)
+  const [auth, setAuth] = useState(() => {
+    try {
+      const storedAuth = localStorage.getItem("auth");
+      return storedAuth ? JSON.parse(storedAuth) : null;
+    } catch (error) {
+      console.error("Error parsing stored auth:", error);
+      return null;
+    }
   });
 
+  // Initialize userData similarly
+  const [userData, setUserData] = useState(() => {
+    try {
+      const storedUserData = localStorage.getItem("userData");
+      return storedUserData
+        ? JSON.parse(storedUserData)
+        : {
+            SrvURL:
+              "http://103.168.19.35/iStWebPublic/iStreamsSmartPublic.asmx",
+            ClientURL: null,
+            doConnectionParameter: null,
+            Current_User_Login: null,
+            Current_User_Name: null,
+            Current_User_EmpNo: null,
+            Current_User_EmpName: null,
+            Current_User_ImageData: null,
+            Client_Username: null,
+            SelectedDashBoardID: null,
+            SelectedDashBoardPage: null,
+            SelectedDashBoardModule: null,
+            CompanyCode: "1",
+            BranchCode: "1",
+          };
+    } catch (error) {
+      console.error("Error parsing stored userData:", error);
+      return {
+        SrvURL: "http://103.168.19.35/iStWebPublic/iStreamsSmartPublic.asmx",
+        ClientURL: null,
+        doConnectionParameter: null,
+        Current_User_Login: null,
+        Current_User_Name: null,
+        Current_User_EmpNo: null,
+        Current_User_EmpName: null,
+        Current_User_ImageData: null,
+        Client_Username: null,
+        SelectedDashBoardID: null,
+        SelectedDashBoardPage: null,
+        SelectedDashBoardModule: null,
+        CompanyCode: "1",
+        BranchCode: "1",
+      };
+    }
+  });
   // Load stored auth and userData from localStorage on mount only
   useEffect(() => {
     try {
       const storedAuth = localStorage.getItem("auth");
       const storedUserData = localStorage.getItem("userData");
-      if (storedAuth && storedUserData) {
+      if (storedAuth) {
         setAuth(JSON.parse(storedAuth));
+      }
+      if (storedUserData) {
         setUserData(JSON.parse(storedUserData));
       }
     } catch (error) {
@@ -37,15 +81,18 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Memoized login to avoid unnecessary re-renders
-  const login = useCallback((data) => {
-    const authData = { token: data.token, email: data.email };
-    setAuth(authData);
-    localStorage.setItem("auth", JSON.stringify(authData));
+  const login = useCallback(
+    (data) => {
+      const authData = { token: data.token, email: data.email };
+      setAuth(authData);
+      localStorage.setItem("auth", JSON.stringify(authData));
 
-    const newUserData = { ...userData, ...data };
-    setUserData(newUserData);
-    localStorage.setItem("userData", JSON.stringify(newUserData));
-  }, [userData]);
+      const newUserData = { ...userData, ...data };
+      setUserData(newUserData);
+      localStorage.setItem("userData", JSON.stringify(newUserData));
+    },
+    [userData]
+  );
 
   // Memoized logout function
   const logout = useCallback(() => {
@@ -72,7 +119,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ auth, login, logout, userData, setUserData }}>
+    <AuthContext.Provider
+      value={{ auth, login, logout, userData, setUserData }}
+    >
       {children}
     </AuthContext.Provider>
   );

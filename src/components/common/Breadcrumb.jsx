@@ -6,10 +6,10 @@ const Breadcrumb = () => {
 
   // Define custom names for specific routes
   const breadcrumbNames = {
+    "my-team": "My Team",
+    "category-view": "Category View",
     "document-list": "Document List",
-    "user-profile": "User Profile",
-    settings: "Settings",
-    reports: "Reports",
+    "document-view": "Document View",
     // Add more as needed
   };
 
@@ -38,7 +38,7 @@ const Breadcrumb = () => {
   };
 
   return (
-    <div className="flex items-end justify-between mb-6">
+    <div className="flex items-end justify-between mb-5">
       <h1 className="text-3xl font-medium">
         {breadcrumbNames[location.pathname.split("/").pop()] ||
           location.pathname.split("/").pop()?.replace("-", " ") ||

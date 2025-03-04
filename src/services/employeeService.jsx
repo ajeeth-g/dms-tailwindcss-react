@@ -2,6 +2,7 @@
 import { createSoapEnvelope, parseDataModelResponse } from "../utils/soapUtils";
 import { doConnection } from "./connectionService";
 import {
+  getAllEmployeeDetailsPayload,
   getEmployeeImagePayload,
   getEmployeeNameAndIdPayload,
 } from "./payloadBuilders";
@@ -66,5 +67,26 @@ export const getEmployeeImage = async (
 
   const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
   const parsedResponse = parseDataModelResponse(soapResponse, "getpic");
+  return parsedResponse;
+};
+
+// Retrieves employee details.
+export const getAllUsers = async (email, dynamicURL = DEFAULT_SOAP_URL) => {
+  const endpoint = getEndpoint(dynamicURL);
+  const payload = getAllEmployeeDetailsPayload(email);
+
+  const doConnectionResponse = await doConnection(endpoint, email);
+  if (doConnectionResponse === "ERROR") {
+    throw new Error("Connection failed: Unable to authenticate.");
+  }
+
+  const SOAP_ACTION = "http://tempuri.org/IM_Get_All_Users";
+  const soapBody = createSoapEnvelope("IM_Get_All_Users", payload);
+
+  const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
+  const parsedResponse = parseDataModelResponse(
+    soapResponse,
+    "IM_Get_All_Users"
+  );
   return parsedResponse;
 };

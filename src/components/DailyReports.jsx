@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const dailyOrdersData  = [
+const dailyOrdersData = [
   { date: "07/01", Documents: 45 },
   { date: "07/02", Documents: 52 },
   { date: "07/03", Documents: 49 },
@@ -20,8 +20,7 @@ const dailyOrdersData  = [
   { date: "07/07", Documents: 62 },
 ];
 
-
-const DailyOrders = () => {
+const DailyReports = () => {
   return (
     <motion.div
       className="bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg rounded-2xl p-6 border border-gray-700"
@@ -29,7 +28,9 @@ const DailyOrders = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
     >
-      <h2 className="text-xl font-semibold text-gray-100 mb-4">Daily Reports</h2>
+      <h2 className="text-xl font-semibold text-gray-100 mb-4">
+        Daily Reports
+      </h2>
 
       <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
@@ -57,4 +58,4 @@ const DailyOrders = () => {
     </motion.div>
   );
 };
-export default DailyOrders;
+export default DailyReports;

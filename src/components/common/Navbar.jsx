@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
 import {
   AlignLeft,
-  CloudSun,
   CloudMoon,
+  CloudSun,
   Maximize,
   Minimize,
 } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getNameFromEmail } from "../../utils/emailHelpers";
@@ -15,22 +15,22 @@ const Navbar = ({ toggleSidebar }) => {
   const { auth, userData, logout } = useAuth();
   const UserName = getNameFromEmail(auth.email);
   const navigate = useNavigate();
-  const [theme, settheme] = React.useState(
-    localStorage.getItem("theme") ? localStorage.getItem("theme") : "cmyk"
-  );
+
+  // Default to dark if no theme is stored.
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  // Update localStorage and HTML attribute when theme changes.
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    const localTheme = localStorage.getItem("theme");
-    document.querySelector("html").setAttribute("data-theme", localTheme);
+    document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   const handleToggle = (e) => {
     if (e.target.checked) {
-      settheme("dark");
+      setTheme("dark");
     } else {
-      settheme("cmyk");
+      setTheme("cmyk");
     }
   };
 
@@ -51,26 +51,32 @@ const Navbar = ({ toggleSidebar }) => {
     navigate("/login");
   };
 
-   // Determine the image source.
+  // Determine the image source.
   // If userData.Current_User_ImageData exists, convert it from hex to Base64 and use the BMP MIME type.
   const imageSrc = userData.Current_User_ImageData
     ? `data:image/bmp;base64,${hexToBase64(userData.Current_User_ImageData)}`
     : "https://via.placeholder.com/150";
 
   return (
-    <nav className="navbar bg-base-300 text-base-content">
-      <div className="navbar-start">
+    <nav className="navbar bg-base-300 text-base-content h-16 flex items-center justify-between">
+      {/* Navbar start */}
+      <div className="flex items-center gap-2">
         <button className="btn btn-ghost btn-circle" onClick={toggleSidebar}>
           <AlignLeft />
         </button>
-        <Link to="/" className="btn btn-ghost text-xl">
+        {/* This link is hidden on mobile devices */}
+        <Link to="/" className="btn btn-ghost text-xl hidden sm:flex ">
           Document Management System
         </Link>
       </div>
-      <div className="navbar-end">
+
+      {/* Desktop navbar end */}
+      <div className="hidden sm:flex items-center gap-2">
+        <div className="border border-gray-700 px-2 py-2 rounded-lg font-semibold">
+          Company name goes here..
+        </div>
         <button className="btn btn-ghost btn-circle">
           <label className="swap swap-rotate">
-            {/* this hidden checkbox controls the state */}
             <input
               type="checkbox"
               className="theme-controller"
@@ -78,15 +84,10 @@ const Navbar = ({ toggleSidebar }) => {
               onChange={handleToggle}
               checked={theme === "dark"}
             />
-
-            {/* sun icon */}
             <CloudSun className="swap-off h-5 w-5" />
-
-            {/* moon icon */}
             <CloudMoon className="swap-on h-5 w-5" />
           </label>
         </button>
-
         <button className="btn btn-ghost btn-circle" onClick={toggleFullScreen}>
           {isFullscreen ? (
             <Minimize className="h-5 w-5" />
@@ -94,7 +95,6 @@ const Navbar = ({ toggleSidebar }) => {
             <Maximize className="h-5 w-5" />
           )}
         </button>
-
         <div className="dropdown dropdown-end">
           <div
             tabIndex={0}
@@ -103,31 +103,61 @@ const Navbar = ({ toggleSidebar }) => {
           >
             <div className="avatar">
               <div className="w-10 h-10 rounded-full">
-                <img
-                  alt="Tailwind CSS Navbar component"
-                  src={imageSrc}
-                />
+                <img alt="User avatar" src={imageSrc} />
               </div>
             </div>
-
             <div className="flex flex-col items-start">
               <span className="text-lg font-semibold">{UserName}</span>
               <span className="text-xs text-gray-400">{auth.email}</span>
             </div>
           </div>
-
           <ul
             tabIndex={0}
             className="menu menu-md dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a className="justify-between">
-                Profile
-                <span className="badge">New</span>
-              </a>
+              <button onClick={handleLogout}>Logout</button>
             </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Mobile navbar end */}
+      <div className="flex items-center sm:hidden">
+        <div className="dropdown dropdown-end">
+          <div
+            tabIndex={0}
+            role="button"
+            className="btn btn-ghost flex items-center gap-1 px-2"
+          >
+            <div className="avatar">
+              <div className="w-10 h-10 rounded-full">
+                <img alt="User avatar" src={imageSrc} />
+              </div>
+            </div>
+            <div className="flex flex-col items-start">
+              <span className="text-lg font-semibold">{UserName}</span>
+              <span className="text-xs text-gray-400">{auth.email}</span>
+            </div>
+          </div>
+          <ul
+            tabIndex={0}
+            className="menu menu-md dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
+          >
             <li>
-              <button>Settings</button>
+              <button className="btn btn-ghost btn-circle">
+                <label className="swap swap-rotate">
+                  <input
+                    type="checkbox"
+                    className="theme-controller"
+                    value="synthwave"
+                    onChange={handleToggle}
+                    checked={theme === "dark"}
+                  />
+                  <CloudSun className="swap-off h-5 w-5" />
+                  <CloudMoon className="swap-on h-5 w-5" />
+                </label>
+              </button>
             </li>
             <li>
               <button onClick={handleLogout}>Logout</button>

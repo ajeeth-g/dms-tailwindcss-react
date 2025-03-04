@@ -93,3 +93,14 @@ export const getEmployeeNameAndIdPayload = (userfirstname) => ({
 export const getEmployeeImagePayload = (empNo) => ({
   EmpNo: empNo,
 });
+
+// Payload for getEmployeeDetails
+export const getAllEmployeeDetailsPayload = (empolyeeDetails) => ({
+  UserName: empolyeeDetails,
+});
+
+// Payload for verifyauthenticationPayload
+export const verifyauthenticationPayload = (userDetails) => ({
+  username: userDetails.User,
+  password: userDetails.Pass,
+});

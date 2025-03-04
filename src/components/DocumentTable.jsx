@@ -12,10 +12,9 @@ import pdfIcon from "../assets/pdf-icon.png";
 import pptIcon from "../assets/ppt-icon.png";
 import wordIcon from "../assets/word-icon.png";
 import { useAuth } from "../context/AuthContext";
-import { getDataModel } from "../services/dataService";
 import LoadingSpinner from "./common/LoadingSpinner";
 import DocumentUpload from "./DocumentUpload";
-import { deleteDMSMaster } from "../services/dmsService";
+import { deleteDMSMaster, getDocMasterList } from "../services/dmsService";
 import {
   flexRender,
   getCoreRowModel,
@@ -30,37 +29,38 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  FilePen,
+  FileStack,
   FileUp,
+  Pencil,
+  SquarePenIcon,
   Trash2,
+  Upload,
 } from "lucide-react";
+import DocumentForm from "./DocumentForm";
 
 const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
   const [masterData, setMasterData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedDocument, setSelectedDocument] = useState(null);
-  const modalRef = useRef(null);
+  const modalRefForm = useRef(null);
+  const modalRefUpload = useRef(null);
   const [sorting, setSorting] = useState([{ id: "REF_SEQ_NO", desc: true }]);
   const { auth } = useAuth();
 
-  // Fetch master data and attach a stable UUID to each row
-  const fetchMasterData = useCallback(async () => {
+  const fetchDocsMasterList = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await getDataModel(
-        {
-          dataModelName: "SYNM_DMS_MASTER",
-          whereCondition: "",
-          orderby: "",
-        },
-        auth.email
-      );
-      // Ensure response is an array. If it's not, set it to an empty array.
+      const docsPayload = {
+        WhereCondition: "",
+        orderby: "",
+        IncludeEmpImage: true,
+      };
+      const response = await getDocMasterList(docsPayload, auth.email);
       const dataArray = Array.isArray(response) ? response : [];
-      // Enrich data: attach an empty array for uploadedDocs if not present, and add a uuid
       const enriched = dataArray.map((doc) => ({
         ...doc,
-        // Ensure that uploadedDocs is an array. If it's not, fallback to an empty array.
         uploadedDocs: Array.isArray(doc.uploadedDocs) ? doc.uploadedDocs : [],
         uuid: uuidv4(),
       }));
@@ -76,46 +76,11 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
     }
   }, [auth.email]);
 
-  // Fetch document details for a given ref_seq_no
-  const fetchDetailsForRef = useCallback(
-    async (ref_seq_no) => {
-      try {
-        const details = await getDataModel(
-          {
-            dataModelName: "SYNM_DMS_DETAILS",
-            whereCondition: `ref_seq_no = ${ref_seq_no}`,
-            orderby: "",
-          },
-          auth.email
-        );
-        return details;
-      } catch (err) {
-        console.error(
-          `Error fetching details for ref_seq_no ${ref_seq_no}:`,
-          err
-        );
-        return [];
-      }
-    },
-    [auth.email]
-  );
-
-  // Load master data then fetch details for each row
+  // Load master data
   const loadData = useCallback(async () => {
-    const master = await fetchMasterData();
-    if (master && master.length > 0) {
-      const updatedData = await Promise.all(
-        master.map(async (doc) => {
-          const details = await fetchDetailsForRef(doc.REF_SEQ_NO);
-          return {
-            ...doc,
-            uploadedDocs: details && details.length > 0 ? details : [],
-          };
-        })
-      );
-      setMasterData(updatedData);
-    }
-  }, [fetchMasterData, fetchDetailsForRef]);
+    const master = await fetchDocsMasterList();
+    setMasterData(master);
+  }, [fetchDocsMasterList]);
 
   // Initial data load on mount
   useEffect(() => {
@@ -129,25 +94,24 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
     }
   }, [fetchDataRef, loadData]);
 
-  // Modal open handler
-  const handleEdit = useCallback((doc) => {
+  // Open the DocumentUpload modal
+  const handleOpenUpload = useCallback((doc) => {
     setSelectedDocument(doc);
-    if (modalRef.current) {
-      modalRef.current.showModal();
+    if (modalRefUpload.current) {
+      modalRefUpload.current.showModal();
     } else {
       console.error("Modal element not found");
     }
   }, []);
 
-  // After upload, update the table row with new documents.
-  const handleUploadComplete = useCallback((refSeqNo, newDocs) => {
-    setMasterData((prevData) =>
-      prevData.map((doc) =>
-        doc.REF_SEQ_NO === refSeqNo
-          ? { ...doc, uploadedDocs: [...doc.uploadedDocs, ...newDocs] }
-          : doc
-      )
-    );
+  // Open the DocumentForm modal (button next to delete)
+  const handleOpenForm = useCallback((doc) => {
+    setSelectedDocument(doc);
+    if (modalRefForm.current) {
+      modalRefForm.current.showModal();
+    } else {
+      console.error("Form modal element not found");
+    }
   }, []);
 
   // Delete handler for document removal
@@ -172,57 +136,28 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
     [auth.email]
   );
 
-  // Helper: Get icon image based on document extension
-  const getDocImage = useCallback((docItem) => {
-    const ext = docItem.DOC_EXT ? docItem.DOC_EXT.toLowerCase() : "";
-    switch (ext) {
-      case "pdf":
-        return pdfIcon;
-      case "xls":
-      case "xlsx":
-        return excelIcon;
-      case "doc":
-      case "docx":
-        return wordIcon;
-      case "ppt":
-      case "pptx":
-        return pptIcon;
-      default:
-        if (ext.match(/(png|jpe?g|gif)$/)) {
-          return docItem.thumbnail ? docItem.thumbnail : defaultIcon;
-        }
-        return defaultIcon;
-    }
-  }, []);
-
-  // Table columns definition
   const columns = useMemo(
     () => [
       {
         header: "Ref No",
+        size: 80,
         accessorKey: "REF_SEQ_NO",
         cell: (info) => info.getValue() || "-",
       },
       {
         header: "Document Name",
+        size: 300,
         accessorKey: "DOCUMENT_DESCRIPTION",
         cell: (info) => info.getValue() || "-",
       },
       {
         header: "Uploader",
+        size: 200,
         accessorKey: "USER_NAME",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
-            <div className="avatar">
-              <div className="mask mask-circle h-8 w-8">
-                <img
-                  src="https://www.shutterstock.com/image-photo/head-shot-portrait-close-smiling-600nw-1714666150.jpg"
-                  alt="Uploader"
-                />
-              </div>
-            </div>
             <div>
-              <p className="text-sm font-semibold">
+              <p className="text-xs font-semibold">
                 {row.getValue("USER_NAME")}
               </p>
             </div>
@@ -231,69 +166,83 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
       },
       {
         header: "Related to",
+        size: 100,
         accessorKey: "DOC_RELATED_TO",
         cell: (info) => info.getValue() || "-",
       },
       {
         header: "Remarks",
+        size: 250,
         accessorKey: "COMMENTS",
         cell: (info) => info.getValue() || "-",
       },
       {
         header: "Status",
+        size: 100,
         accessorKey: "DOCUMENT_STATUS",
         cell: (info) =>
           info.getValue() ? (
             info.getValue()
           ) : (
-            <p className="badge badge-error text-xs font-medium">Not Yet</p>
+            <span className="badge badge-error text-xs font-medium">
+              Not Yet
+            </span>
           ),
       },
       {
+        header: "Docs",
+        accessorKey: "NO_OF_DOCUMENTS",
+        size: 50,
+        cell: (info) => (
+          <div className="flex items-center gap-1">
+            {info.getValue() > 0 ? (
+              <>
+                <span className="badge badge-success text-xs font-medium">
+                  {info.getValue()}
+                </span>
+                <button
+                  className="btn btn-ghost btn-circle btn-sm"
+                  onClick={() => handleOpenUpload(info.row.original)}
+                >
+                  <FilePen className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <button
+                className="btn btn-ghost btn-circle btn-sm"
+                onClick={() => handleOpenUpload(info.row.original)}
+              >
+                <Upload className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ),
+      },
+      {
         header: "Action",
+        size: 50,
         cell: ({ row }) => {
           const doc = row.original;
           return (
-            <div className="flex gap-2">
-              {doc.uploadedDocs && doc.uploadedDocs.length > 0 ? (
-                <div
-                  className="avatar-group -space-x-6 rtl:space-x-reverse cursor-pointer"
-                  onClick={() => handleEdit(doc)}
-                >
-                  {doc.uploadedDocs.slice(0, 3).map((d, i) => (
-                    <div key={i} className="avatar">
-                      <div className="w-8">
-                        <img src={getDocImage(d)} alt="Document icon" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div
-                  className="tooltip tooltip-left tooltip-info"
-                  data-tip="Attach Documents"
-                >
-                  <button
-                    className="btn btn-ghost btn-circle"
-                    onClick={() => handleEdit(doc)}
-                  >
-                    <FileUp />
-                  </button>
-                </div>
-              )}
+            <div className="flex items-center gap-1">
               <button
-                className="btn btn-ghost btn-circle text-red-600"
-                onClick={() => handleDelete(doc)}
-                title="Delete Document"
+                className="btn btn-ghost btn-circle btn-sm"
+                onClick={() => handleOpenForm(doc)}
               >
-                <Trash2 />
+                <SquarePenIcon className="h-4 w-4" />
+              </button>
+              <button
+                className="btn btn-ghost btn-circle btn-sm text-red-600"
+                onClick={() => handleDelete(doc)}
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           );
         },
       },
     ],
-    [handleEdit, handleDelete, getDocImage]
+    [handleDelete, handleOpenUpload, handleOpenForm]
   );
 
   // Global filter function
@@ -328,7 +277,11 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} colSpan={header.colSpan}>
+                  <th
+                    key={header.id}
+                    colSpan={header.colSpan}
+                    style={{ width: header.column.getSize() }}
+                  >
                     {!header.isPlaceholder &&
                       flexRender(
                         header.column.columnDef.header,
@@ -356,7 +309,10 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
               table.getRowModel().rows.map((row) => (
                 <tr key={row.original.uuid}>
                   {row.getVisibleCells().map((cell) => (
-                    <td key={`${row.original.uuid}-${cell.column.id}`}>
+                    <td
+                      key={`${row.original.uuid}-${cell.column.id}`}
+                      style={{ width: cell.column.getSize() }}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -377,35 +333,35 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
       </div>
 
       {/* Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="join">
           <button
-            className="join-item btn btn-md"
+            className="join-item btn btn-sm"
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronsLeft />
           </button>
           <button
-            className="join-item btn btn-md"
+            className="join-item btn btn-sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
             <ChevronLeft />
           </button>
-          <button className="join-item btn btn-md">
+          <button className="join-item btn btn-sm">
             Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
           </button>
           <button
-            className="join-item btn btn-md"
+            className="join-item btn btn-sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
             <ChevronRight />
           </button>
           <button
-            className="join-item btn btn-md"
+            className="join-item btn btn-sm"
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
           >
@@ -441,11 +397,15 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
         </div>
       </div>
 
+      <DocumentForm
+        modalRefForm={modalRefForm}
+        selectedDocument={selectedDocument}
+      />
+
       {/* Modal for Document Upload */}
       <DocumentUpload
-        modalRef={modalRef}
+        modalRefUpload={modalRefUpload}
         selectedDocument={selectedDocument}
-        onUploadComplete={handleUploadComplete}
       />
     </>
   );

@@ -33,7 +33,7 @@ const Greeting = () => {
       {/* Welcome Message */}
       <div className="animate-fade-in">
         <h2 className="text-4xl font-semibold text-white">
-          Welcome Back, <span className="text-indigo-400">{UserName}</span>! 👋
+          Welcome Back, <span className="text-indigo-400">{UserName}</span> 👋
         </h2>
         <p className="text-sm text-gray-400 mt-1">Today is {currentDate}</p>
       </div>

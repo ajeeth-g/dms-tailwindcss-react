@@ -1,17 +1,17 @@
 import { useEffect } from "react";
 import AIPoweredInsights from "../components/AIPoweredInsights";
 import ChannelPerformance from "../components/ChannelPerformance";
-import DailyOrders from "../components/DailyOrders";
+import DailyReports from "../components/DailyReports";
+import DocumentChannelChart from "../components/DocumentChannelChart";
+import DocumentDistribution from "../components/DocumentDistribution";
 import Greeting from "../components/Greeting";
-import OrderDistribution from "../components/OrderDistribution";
-import SalesChannelChart from "../components/SalesChannelChart";
 import StatCard from "../components/StatCard";
 import TeamDashboard from "../components/TeamDashboard";
-import { doConnection } from "../services/connectionService";
-import UploadDocumentPage from "./UploadDocumentPage";
 import { useAuth } from "../context/AuthContext";
+import { doConnection } from "../services/connectionService";
+import DocumentListPage from "./DocumentListPage";
 
-export default function Dashboard() {
+export default function DashboardPage() {
   const { auth, userData } = useAuth();
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function Dashboard() {
         <Greeting />
       </div>
       <div className="col-span-2 md:col-span-1 lg:col-span-1">
-        <OrderDistribution />
+        <DocumentDistribution />
       </div>
       <div className="md:col-span-1 lg:col-span-1">
         <StatCard />
@@ -39,10 +39,10 @@ export default function Dashboard() {
         <ChannelPerformance />
       </div>
       <div className="col-span-2 md:col-span-1 lg:col-span-1">
-        <SalesChannelChart />
+        <DocumentChannelChart />
       </div>
       <div className="col-span-2">
-        <DailyOrders />
+        <DailyReports />
       </div>
       <div className="col-span-2">
         <TeamDashboard />
@@ -51,7 +51,7 @@ export default function Dashboard() {
         <AIPoweredInsights />
       </div>
       <div className="col-span-2">
-        <UploadDocumentPage />
+        <DocumentListPage />
       </div>
     </div>
   );

@@ -1,54 +1,87 @@
-import { CalendarDays, FileType2, X, Download, Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  FileType2,
+  X,
+  Download,
+  Trash2,
+  View,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { v4 as uuidv4 } from "uuid";
 import { getDataModel } from "../services/dataService";
-import { createAndSaveDMSDetails, deleteDMSDetails } from "../services/dmsService";
+import {
+  createAndSaveDMSDetails,
+  deleteDMSDetails,
+} from "../services/dmsService";
 import { readFileAsBase64 } from "../utils/soapUtils";
 import LoadingSpinner from "./common/LoadingSpinner";
 import { useAuth } from "../context/AuthContext";
+import pdfIcon from "../assets/pdf-icon.png";
+import defaultIcon from "../assets/default-doc-icon.png";
+import Button from "./common/Button";
 
-const DocumentUpload = ({ modalRef, selectedDocument, onUploadComplete }) => {
+const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
   const { auth } = useAuth();
-
-  // For category lookup
-  const [dataModelName] = useState("SYNM_DMS_DOC_CATEGORIES");
-  const [whereCondition] = useState("");
-  const [orderby] = useState("");
-  const [categoryData, setCategoryData] = useState([]);
-
-  // Pending files for the current document.
+  const [existingDocs, setExistingDocs] = useState([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [fetchError, setFetchError] = useState("");
   const [files, setFiles] = useState([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categoryData, setCategoryData] = useState([]);
 
-  // Reset files when a new document is selected.
+  // Fetch existing documents and categories
   useEffect(() => {
-    setFiles([]);
-    setErrorMsg("");
-  }, [selectedDocument]);
+    const fetchData = async () => {
+      if (!selectedDocument?.REF_SEQ_NO) return;
 
-  // Fetch category data on mount.
-  useEffect(() => {
-    const fetchCategoryDataModel = async () => {
+      setIsLoadingDocs(true);
+      setFetchError("");
+
       try {
-        const response = await getDataModel(
-          { dataModelName, whereCondition, orderby },
+        // Fetch existing documents
+        const docsResponse = await getDataModel(
+          {
+            dataModelName: "SYNM_DMS_DETAILS",
+            whereCondition: `REF_SEQ_NO = ${selectedDocument.REF_SEQ_NO}`,
+            orderby: "",
+          },
           auth.email
         );
-        // Ensure that categoryData is an array of valid objects
-        const validCategories = Array.isArray(response)
-          ? response.filter((item) => item && item.CATEGORY_NAME)
+
+        // Handle different response formats
+        const receivedDocs = Array.isArray(docsResponse)
+          ? docsResponse
+          : docsResponse?.Data || [];
+
+        setExistingDocs(receivedDocs);
+
+        // Fetch document categories
+        const categoriesResponse = await getDataModel(
+          {
+            DataModelName: "SYNM_DMS_DOC_CATEGORIES",
+            WhereCondition: "",
+            Orderby: "",
+          },
+          auth.email
+        );
+
+        const receivedCategories = Array.isArray(categoriesResponse)
+          ? categoriesResponse.filter((item) => item?.CATEGORY_NAME)
           : [];
-        setCategoryData(validCategories);
+
+        setCategoryData(receivedCategories);
       } catch (err) {
-        console.error("Error fetching data model:", err);
+        console.error("Fetch error:", err);
+        setFetchError("Failed to load documents");
+      } finally {
+        setIsLoadingDocs(false);
       }
     };
-    fetchCategoryDataModel();
-  }, [dataModelName, whereCondition, orderby, auth.email]);
 
-  // Only allow specific MIME types.
+    fetchData();
+  }, [selectedDocument?.REF_SEQ_NO, auth.email]);
+
   const allowedMimeTypes = {
     "image/*": [],
     "application/pdf": [],
@@ -56,31 +89,21 @@ const DocumentUpload = ({ modalRef, selectedDocument, onUploadComplete }) => {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
   };
 
-  // List of disallowed file extensions.
   const disallowedExtensions = ["exe", "bat", "sh", "msi", "js"];
 
-  // Configure the dropzone.
   const { getRootProps, getInputProps } = useDropzone({
     accept: allowedMimeTypes,
     multiple: true,
     onDrop: (acceptedFiles) => {
-      // Filter files based on extension.
       const validFiles = acceptedFiles.filter((file) => {
         const ext = file.name.split(".").pop().toLowerCase();
-        if (disallowedExtensions.includes(ext)) {
-          setErrorMsg(`File type not allowed: ${file.name}`);
-          return false;
-        }
-        return true;
+        return !disallowedExtensions.includes(ext);
       });
-      setFiles((prevFiles) => [
-        ...prevFiles,
+      setFiles((prev) => [
+        ...prev,
         ...validFiles.map((file) => ({
           file,
-          preview:
-            file.type.startsWith("image") || file.type === "application/pdf"
-              ? URL.createObjectURL(file)
-              : null,
+          preview: URL.createObjectURL(file),
           name: file.name,
           size: (file.size / 1024).toFixed(2) + " KB",
           category: "",
@@ -91,347 +114,321 @@ const DocumentUpload = ({ modalRef, selectedDocument, onUploadComplete }) => {
     },
   });
 
-  // Cancel (remove) a pending file.
-  const handleRemoveFile = (index) => {
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-  };
-
-  // Update the category for a pending file.
-  const handleCategoryChange = (index, category) => {
-    setFiles((prevFiles) =>
-      prevFiles.map((file, i) => (i === index ? { ...file, category } : file))
-    );
-  };
-
-  // Simulated progress update for each file.
-  const startUpload = (index) => {
-    let progress = 0;
-    const interval = setInterval(() => {
-      setFiles((prevFiles) =>
-        prevFiles.map((file, i) =>
-          i === index ? { ...file, progress: progress + 10 } : file
-        )
+  const refreshDocuments = async () => {
+    try {
+      const response = await getDataModel(
+        {
+          dataModelName: "SYNM_DMS_DETAILS",
+          whereCondition: `REF_SEQ_NO = ${selectedDocument.REF_SEQ_NO}`,
+          orderby: "",
+        },
+        auth.email
       );
-      progress += 10;
-      if (progress >= 100) clearInterval(interval);
-    }, 300);
+      const updatedDocs = Array.isArray(response)
+        ? response
+        : response?.Data || [];
+      setExistingDocs(updatedDocs);
+    } catch (err) {
+      console.error("Refresh error:", err);
+    }
   };
 
-  // Start upload progress for pending files.
-  useEffect(() => {
-    files.forEach((file, index) => {
-      if (file.progress === 0) startUpload(index);
-    });
-  }, [files]);
-
-  // Sequentially upload each pending file.
   const handleSave = async () => {
     setErrorMsg("");
     setIsSubmitting(true);
-    let newDocs = [];
-    for (let i = 0; i < files.length; i++) {
-      const currentFile = files[i];
-      try {
-        // Convert file to base64.
-        const base64Data = await readFileAsBase64(currentFile.file);
-        // Build payload using selectedDocument details plus file data.
+
+    try {
+      // Calculate next serial number
+      const maxSerial = existingDocs.reduce(
+        (max, doc) => Math.max(max, doc.SERIAL_NO || 0),
+        0
+      );
+      let currentSerial = maxSerial;
+
+      for (const [index, file] of files.entries()) {
+        currentSerial += 1;
+        const base64Data = await readFileAsBase64(file.file);
+
         const payload = {
           REF_SEQ_NO: selectedDocument.REF_SEQ_NO,
-          SERIAL_NO: i + 1,
+          SERIAL_NO: currentSerial,
           DOCUMENT_NO: selectedDocument.DOCUMENT_NO || "",
           DOCUMENT_DESCRIPTION: selectedDocument.DOCUMENT_DESCRIPTION || "",
           DOC_SOURCE_FROM: selectedDocument.DOC_SOURCE_FROM || "",
           DOC_RELATED_TO: selectedDocument.DOC_RELATED_TO || "",
-          DOC_RELATED_CATEGORY: selectedDocument.DOC_RELATED_CATEGORY || "",
+          DOC_RELATED_CATEGORY: file.category || "",
           DOC_REF_VALUE: selectedDocument.DOC_REF_VALUE || "",
-          USER_NAME: selectedDocument.USER_NAME || "",
+          USER_NAME: selectedDocument.USER_NAME || auth.email,
           COMMENTS: selectedDocument.COMMENTS || "",
           DOC_TAGS: selectedDocument.DOC_TAGS || "",
           FOR_THE_USERS: selectedDocument.FOR_THE_USERS || "",
-          EXPIRY_DATE: currentFile.expiryDate || "",
+          EXPIRY_DATE: file.expiryDate || "",
           DOC_DATA: base64Data,
-          DOC_NAME: currentFile.name,
-          DOC_EXT: currentFile.name.split(".").pop(),
+          DOC_NAME: file.name,
+          DOC_EXT: file.name.split(".").pop(),
           FILE_PATH: "",
         };
 
-        // Upload the file.
-        const response = await createAndSaveDMSDetails(payload, auth.email);
-        console.log(
-          `File ${currentFile.name} uploaded successfully.`,
-          response
-        );
-        // Prepare a document object to update the parent table.
-        newDocs.push({
-          thumbnail: currentFile.preview,
-          DOC_NAME: currentFile.name,
-          DOC_EXT: payload.DOC_EXT,
-          // Optionally store SERIAL_NO if available from the response.
-          SERIAL_NO: payload.SERIAL_NO,
-          // You may also store a download URL if your backend provides one.
-          downloadUrl: response.downloadUrl || currentFile.preview,
-        });
-      } catch (error) {
-        console.error(`Error uploading file ${currentFile.name}:`, error);
-        setErrorMsg(
-          `Error uploading file ${currentFile.name}: ${error.message}`
-        );
-        break;
+        await createAndSaveDMSDetails(payload, auth.email);
       }
+
+      await refreshDocuments();
+      setFiles([]);
+      modalRefUpload.current?.close();
+    } catch (error) {
+      console.error("Upload error:", error);
+      setErrorMsg(`Upload failed: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
-    // Update only the selected document's uploadedDocs.
-    if (newDocs.length > 0) {
-      onUploadComplete(selectedDocument.REF_SEQ_NO, newDocs);
-    }
-    // Do not clear the pending files so that the user can still see the uploaded ones.
   };
 
-  // Download handler: Create a temporary link to download the file.
   const handleDownload = (doc) => {
-    const link = document.createElement("a");
-    link.href = doc.downloadUrl || doc.thumbnail || "#";
-    link.download = doc.DOC_NAME;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      if (doc.DOC_DATA) {
+        const byteCharacters = atob(doc.DOC_DATA);
+        const byteNumbers = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const blob = new Blob([byteNumbers], {
+          type: `application/${doc.DOC_EXT}`,
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = doc.DOC_NAME;
+        document.body.appendChild(link);
+        link.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      alert("Failed to download document");
+    }
   };
 
-  // Delete handler for an uploaded document.
-  const handleDeleteUploadedDoc = async (doc, index) => {
-    if (
-      !window.confirm(`Are you sure you want to delete ${doc.DOC_NAME}?`)
-    )
-      return;
+  const handleDelete = async (doc) => {
+    if (!window.confirm(`Delete ${doc.DOC_NAME}?`)) return;
+
     try {
-      // Assuming SERIAL_NO is provided in doc or use index + 1 as fallback.
-      const payload = {
-        USER_NAME: selectedDocument.USER_NAME,
-        REF_SEQ_NO: selectedDocument.REF_SEQ_NO,
-        SERIAL_NO: doc.SERIAL_NO || index + 1,
-      };
-      await deleteDMSDetails(payload, auth.email);
-      // Remove the document from the selectedDocument's uploadedDocs list.
-      const updatedDocs = selectedDocument.uploadedDocs.filter(
-        (_, i) => i !== index
+      await deleteDMSDetails(
+        {
+          USER_NAME: selectedDocument.USER_NAME || auth.email,
+          REF_SEQ_NO: selectedDocument.REF_SEQ_NO,
+          SERIAL_NO: doc.SERIAL_NO,
+        },
+        auth.email
       );
-      // Here, you might need to call a callback to update the parent state.
-      // For simplicity, we'll assume selectedDocument is mutable.
-      selectedDocument.uploadedDocs = updatedDocs;
-      // Optionally force a re-render if required by calling a parent's refresh function.
+
+      await refreshDocuments();
     } catch (err) {
-      console.error("Error deleting document:", err);
-      alert("Failed to delete document.");
+      console.error("Delete error:", err);
+      alert("Failed to delete document");
     }
   };
 
   return (
-    <>
-      <dialog ref={modalRef} id="document_attachment" className="modal">
-        <div className="modal-box w-11/12 max-w-5xl">
-          <button
-            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            onClick={() => modalRef.current.close()}
-          >
-            <X />
-          </button>
-          <h3 className="font-bold text-lg">Add Documents</h3>
-          <div className="divider"></div>
+    <dialog ref={modalRefUpload} className="modal">
+      <div className="modal-box w-11/12 max-w-5xl">
+        <button
+          className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          onClick={() => modalRefUpload.current?.close()}
+        >
+          <X />
+        </button>
 
-          <div className="flex justify-between mb-3">
-            <h6 className="flex items-center gap-2 font-semibold">
-              Reference No:
-              <span className="badge badge-primary">
-                {selectedDocument?.REF_SEQ_NO}
-              </span>
-            </h6>
-            <h6 className="flex items-center gap-2 font-semibold">
-              Document Name:
-              <span className="badge badge-primary">
-                {selectedDocument?.DOCUMENT_DESCRIPTION}
-              </span>
-            </h6>
+        <h3 className="font-bold text-lg mb-4">Document Manager</h3>
+
+        <div className="flex justify-between mb-6">
+          <div className="badge badge-lg badge-primary">
+            REF: {selectedDocument?.REF_SEQ_NO}
           </div>
+          <div className="badge badge-lg badge-secondary">
+            Current Documents: {existingDocs.length}
+          </div>
+        </div>
 
-          {/* Display uploaded documents for the current REF_SEQ_NO only */}
-          {selectedDocument?.uploadedDocs &&
-            selectedDocument.uploadedDocs.length > 0 && (
-              <div className="mb-4">
-                <h4 className="font-semibold mb-2">Uploaded Documents:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedDocument.uploadedDocs.map((doc, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 p-2 border rounded"
-                    >
+        {fetchError && (
+          <div className="alert alert-error mb-4">
+            <span>{fetchError}</span>
+          </div>
+        )}
+
+        <div className="border-2 border-dashed rounded-lg p-4 mb-6 bg-base-200">
+          <div {...getRootProps()} className="text-center cursor-pointer">
+            <input {...getInputProps()} />
+            <p className="text-gray-500">
+              Drag & drop files or click to select
+            </p>
+          </div>
+        </div>
+
+        {isLoadingDocs ? (
+          <LoadingSpinner />
+        ) : existingDocs.length > 0 ? (
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold mb-4">Existing Documents</h4>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              {existingDocs.map((doc, index) => (
+                <div
+                  key={`${doc.REF_SEQ_NO}-${doc.SERIAL_NO}`}
+                  className="card bg-base-100 shadow-sm"
+                >
+                  <div className="card-body p-4">
+                    <div className="flex items-center gap-4">
                       <img
-                        src={
-                          doc.thumbnail ||
-                          (doc.DOC_EXT === "pdf"
-                            ? "/path/to/pdfIcon.png"
-                            : "/path/to/defaultIcon.png")
-                        }
-                        alt={doc.DOC_NAME}
-                        className="w-8 h-8"
+                        src={doc.DOC_EXT === "pdf" ? pdfIcon : defaultIcon}
+                        alt="Document type"
+                        className="w-12 h-12"
                       />
-                      <span className="text-sm">{doc.DOC_NAME}</span>
-                      <button
-                        className="btn btn-xs"
-                        title="Download Document"
-                        onClick={() => handleDownload(doc)}
-                      >
-                        <Download />
-                      </button>
-                      <button
-                        className="btn btn-xs btn-error"
-                        title="Delete Document"
-                        onClick={() => handleDeleteUploadedDoc(doc, index)}
-                      >
-                        <Trash2 />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          {errorMsg && (
-            <div className="alert alert-error mb-3">
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          <div className="p-4 border-dashed border-2 border-gray-300 rounded-lg mb-3">
-            <div {...getRootProps()} className="p-4 text-center cursor-pointer">
-              <input {...getInputProps()} />
-              <p>Drag & drop files here, or click to select files</p>
-            </div>
-          </div>
-
-          {files.length > 0 && (
-            <div className="flex flex-wrap">
-              {files.map((file, index) => (
-                <div key={index} className="flex items-center p-2 rounded mb-2">
-                  <div className="card card-compact bg-neutral text-neutral-content w-72">
-                    <div className="card-body">
-                      <div className="card-actions justify-end">
-                        <button
-                          className="btn btn-square btn-sm"
-                          onClick={() => handleRemoveFile(index)}
-                        >
-                          <X className="h-6 w-6" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {file.preview && (
-                          <div className="mask mask-squircle w-8">
-                            <img src={file.preview} alt="preview" />
-                          </div>
-                        )}
-                        <div className="flex-1 flex-col">
-                          <p className="font-semibold">{file.name}</p>
-                          <span className="text-xs opacity-70">
-                            ({file.size})
-                          </span>
+                      <div className="flex-1">
+                        <h5 className="font-medium truncate">{doc.DOC_NAME}</h5>
+                        <div className="text-sm text-gray-500">
+                          <p>Type: {doc.DOC_EXT}</p>
+                          <p>Serial: {doc.SERIAL_NO}</p>
                         </div>
                       </div>
-
-                      <div className="flex flex-col items-center gap-2 w-full">
-                        <div className="w-full">
-                          <div className="flex items-center gap-1 mb-2">
-                            <FileType2 className="h-4 w-4" />
-                            <label className="text-xs">Document Type</label>
-                          </div>
-                          <select
-                            className="select select-bordered select-sm w-full max-w-xs bg-neutral text-neutral-content"
-                            value={file.category}
-                            onChange={(e) =>
-                              handleCategoryChange(index, e.target.value)
-                            }
-                          >
-                            <option disabled value="">
-                              Select Type
-                            </option>
-                            {Array.isArray(categoryData) &&
-                              categoryData
-                                .filter((category) => category)
-                                .map((category) => (
-                                  <option
-                                    key={uuidv4()}
-                                    value={category.CATEGORY_NAME}
-                                  >
-                                    {category.CATEGORY_NAME}
-                                  </option>
-                                ))}
-                          </select>
-                        </div>
-
-                        <div className="w-full">
-                          <div className="flex items-center gap-1 mb-2">
-                            <CalendarDays className="h-4 w-4" />
-                            <label className="text-xs">
-                              Document Expiry Date
-                            </label>
-                          </div>
-                          <input
-                            type="date"
-                            value={file.expiryDate}
-                            onChange={(e) => {
-                              const newDate = e.target.value;
-                              setFiles((prevFiles) =>
-                                prevFiles.map((f, i) =>
-                                  i === index
-                                    ? { ...f, expiryDate: newDate }
-                                    : f
-                                )
-                              );
-                            }}
-                            className="input input-bordered input-sm w-full bg-neutral text-neutral-content"
-                          />
-                        </div>
+                      <div className="flex gap-2">
+                        <Button
+                          icon={<View size={18} />}
+                          onClick={() => handleDownload(doc)}
+                          tooltip="View"
+                          variant="ghost"
+                        />
+                        <Button
+                          icon={<Trash2 size={18} />}
+                          onClick={() => handleDelete(doc)}
+                          tooltip="Delete"
+                          variant="error"
+                        />
                       </div>
-
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div
-                          className="bg-blue-500 h-2.5 w-full rounded-full transition-all duration-300"
-                          style={{ width: `${Math.min(file.progress, 100)}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-xs opacity-30">
-                        {file.progress < 100
-                          ? `Uploading... ${file.progress}%`
-                          : "Upload Completed ✅"}
-                      </span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            No documents found for this reference
+          </div>
+        )}
 
-          <div className="modal-action">
-            <div className="flex justify-end gap-4">
-              <button className="btn" onClick={() => modalRef.current.close()}>
-                Close
-              </button>
-              <button
-                className="btn btn-success"
-                onClick={handleSave}
-                disabled={files.length === 0}
-              >
-                Upload Document
-                {isSubmitting ? (
-                  <LoadingSpinner className="loading loading-spinner loading-md" />
-                ) : (
-                  ""
-                )}
-              </button>
+        {files.length > 0 && (
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold mb-4">New Uploads</h4>
+            <div className="space-y-4">
+              {files.map((file, index) => (
+                <div key={index} className="card bg-base-100 shadow-sm">
+                  <div className="card-body p-4">
+                    <div className="flex items-start gap-4">
+                      {file.preview && (
+                        <img
+                          src={file.preview}
+                          alt="Preview"
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium truncate">
+                            {file.name}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            {file.size}
+                          </span>
+                          <button
+                            className="ml-auto btn btn-xs btn-ghost"
+                            onClick={() =>
+                              setFiles((f) => f.filter((_, i) => i !== index))
+                            }
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <select
+                            className="select select-bordered select-sm"
+                            value={file.category}
+                            onChange={(e) =>
+                              handleCategoryChange(index, e.target.value)
+                            }
+                            required
+                          >
+                            <option value="">Select Category</option>
+                            {categoryData.map((category) => (
+                              <option
+                                key={category.CATEGORY_NAME}
+                                value={category.CATEGORY_NAME}
+                              >
+                                {category.CATEGORY_NAME}
+                              </option>
+                            ))}
+                          </select>
+
+                          <input
+                            type="date"
+                            className="input input-bordered input-sm"
+                            value={file.expiryDate}
+                            onChange={(e) =>
+                              setFiles((f) =>
+                                f.map((item, i) =>
+                                  i === index
+                                    ? { ...item, expiryDate: e.target.value }
+                                    : item
+                                )
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all"
+                            style={{ width: `${file.progress}%` }}
+                          />
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {file.progress}% uploaded
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
+
+        <div className="modal-action">
+          <div className="flex justify-end gap-3 w-full">
+            <button
+              className="btn btn-ghost"
+              onClick={() => modalRefUpload.current?.close()}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={files.length === 0 || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner className="w-4 h-4 mr-2" />
+                  Uploading...
+                </>
+              ) : (
+                `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
+              )}
+            </button>
+          </div>
         </div>
-      </dialog>
-    </>
+      </div>
+    </dialog>
   );
 };
 

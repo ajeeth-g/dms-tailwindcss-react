@@ -1,12 +1,24 @@
 import { Link } from "react-router-dom";
 import Logo from "../../assets/logo-light.png";
-import { ExternalLink, FileUp, LayoutPanelLeft, ListTodo } from "lucide-react";
+import {
+  ExternalLink,
+  FileSearch,
+  FileText,
+  FileUp,
+  Grid,
+  Grid2X2,
+  LayoutDashboard,
+  LayoutGrid,
+  LayoutPanelLeft,
+  ListTodo,
+  Users,
+} from "lucide-react";
 
 const Sidebar = ({ isOpen }) => {
   return (
     <aside
       className={`${
-        isOpen ? "w-full max-w-48" : "w-0"
+        isOpen ? "w-full max-w-56" : "w-0"
       } min-h-screen bg-base-300 text-base-content transition-all duration-300 overflow-hidden`}
     >
       <Link
@@ -16,20 +28,12 @@ const Sidebar = ({ isOpen }) => {
         className="flex items-start gap-2 px-2 mt-4"
       >
         {/* Logo Container */}
-        <div className="h-14 w-14 rounded-full overflow-hidden flex justify-center items-center">
+        <div className="h-14 w-full rounded-md overflow-hidden flex justify-center items-center">
           <img
             src={Logo}
             alt="iStreams ERP Solutions"
             className="h-full w-full object-fill"
           />
-        </div>
-
-        {/* Text Content */}
-        <div className="flex flex-col gap-0">
-          <p className="text-3xl font-semibold tracking-wide">iStreams</p>
-          <p className="flex items-center gap-1 text-xs text-gray-400">
-            TRI Dubai <ExternalLink className="h-3 w-3" />
-          </p>
         </div>
       </Link>
 
@@ -44,8 +48,26 @@ const Sidebar = ({ isOpen }) => {
               to="/"
               className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
-              <LayoutPanelLeft className="h-5 w-5" />
+              <LayoutDashboard className="h-5 w-5" />
               Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/my-team"
+              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+            >
+              <Users className="h-5 w-5" />
+              My Team
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/category-view"
+              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+            >
+              <LayoutGrid className="h-5 w-5" />
+              Category View
             </Link>
           </li>
           <li>
@@ -53,17 +75,17 @@ const Sidebar = ({ isOpen }) => {
               to="/document-list"
               className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
-              <FileUp className="h-5 w-5" />
-              Docs List
+              <FileText className="h-5 w-5" />
+              Document List
             </Link>
           </li>
           <li>
             <Link
-              to="/Document"
+              to="/document-view"
               className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
-              <ListTodo className="h-5 w-5" />
-              Docs
+              <FileSearch className="h-5 w-5" />
+              Document View
             </Link>
           </li>
         </ul>

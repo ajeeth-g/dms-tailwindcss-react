@@ -67,6 +67,29 @@ export const createAndSaveDMSDetails = async (
   return parsedResponse;
 };
 
+// Create, modify & save DMS detail record.
+export const getDocMasterList = async (
+  payload,
+  email,
+  dynamicURL = DEFAULT_SOAP_URL
+) => {
+  const endpoint = getEndpoint(dynamicURL);
+
+  const doConnectionResponse = await doConnection(endpoint, email);
+  if (doConnectionResponse === "ERROR") {
+    throw new Error("Connection failed: Unable to authenticate.");
+  }
+
+  const SOAP_ACTION = "http://tempuri.org/DMS_GetDocMaster_List";
+  const soapBody = createSoapEnvelope("DMS_GetDocMaster_List", payload);
+  const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
+  const parsedResponse = parseDataModelResponse(
+    soapResponse,
+    "DMS_GetDocMaster_List"
+  );
+  return parsedResponse;
+};
+
 // Delete DMS master record.
 export const deleteDMSMaster = async (
   payload,

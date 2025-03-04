@@ -20,7 +20,9 @@ import { createAndSaveDMSMaster } from "../services/dmsService";
 import { getNameFromEmail } from "../utils/emailHelpers";
 import LoadingSpinner from "./common/LoadingSpinner";
 
-const DocumentForm = ({ modalRef }) => {
+const DocumentForm = ({ modalRefForm, selectedDocument }) => {
+  const refSeqNoFromParent = selectedDocument?.REF_SEQ_NO;
+
   const { auth } = useAuth();
 
   const UserName = getNameFromEmail(auth.email);
@@ -47,6 +49,17 @@ const DocumentForm = ({ modalRef }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoryData, setCategoryData] = useState([]);
   const [dmsMasterData, setDmsMasterData] = useState([]);
+
+  // Update form state if a valid selectedDocument is provided.
+  useEffect(() => {
+    if (selectedDocument && selectedDocument.REF_SEQ_NO !== -1) {
+      setFormData({
+        ...initialFormState,
+        ...selectedDocument,
+        USER_NAME: UserName.toUpperCase(),
+      });
+    }
+  }, [selectedDocument, UserName]);
 
   // Fetch category data on component mount
   useEffect(() => {
@@ -129,7 +142,7 @@ const DocumentForm = ({ modalRef }) => {
       if (response) {
         // Reset form but retain the next reference number
         setFormData(initialFormState);
-        modalRef.current?.close();
+        modalRefForm.current?.close();
       } else {
         console.error("Failed to submit data. Please try again.");
       }
@@ -141,7 +154,7 @@ const DocumentForm = ({ modalRef }) => {
   };
 
   return (
-    <dialog ref={modalRef} id="create-task" className="modal">
+    <dialog ref={modalRefForm} id="create-task" className="modal">
       <div className="modal-box w-11/12 max-w-5xl">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold text-xl">
@@ -154,7 +167,7 @@ const DocumentForm = ({ modalRef }) => {
             <button
               type="button"
               className="btn btn-sm btn-circle btn-ghost"
-              onClick={() => modalRef.current.close()}
+              onClick={() => modalRefForm.current.close()}
             >
               <X />
             </button>
@@ -273,11 +286,17 @@ const DocumentForm = ({ modalRef }) => {
                       <option value="" disabled>
                         Select related category
                       </option>
-                      {categoryData.map((category) => (
-                        <option key={uuidv4()} value={category.CATEGORY_NAME}>
-                          {category.CATEGORY_NAME}
-                        </option>
-                      ))}
+                      {Array.isArray(categoryData) &&
+                        categoryData.map((category) =>
+                          category && category.CATEGORY_NAME ? (
+                            <option
+                              key={uuidv4()}
+                              value={category.CATEGORY_NAME}
+                            >
+                              {category.CATEGORY_NAME}
+                            </option>
+                          ) : null
+                        )}
                     </select>
                     {errors.DOC_RELATED_CATEGORY && (
                       <p className="text-red-500 text-xs">
@@ -411,7 +430,7 @@ const DocumentForm = ({ modalRef }) => {
                     <label className="text-sm">Document Status</label>
                   </div>
                   <p className="badge badge-error text-xs font-medium">
-                    Not Yet Started
+                    Not Yet
                   </p>
                 </div>
               </div>
