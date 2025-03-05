@@ -66,7 +66,10 @@ export const getEmployeeImage = async (
   const soapBody = createSoapEnvelope("getpic", payload);
 
   const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
+  console.log(soapResponse);
+
   const parsedResponse = parseDataModelResponse(soapResponse, "getpic");
+
   return parsedResponse;
 };
 

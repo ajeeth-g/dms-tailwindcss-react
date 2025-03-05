@@ -3,8 +3,11 @@ import { CalendarDays, Link, User2 } from "lucide-react";
 import { createTask } from "../api/createTaskService";
 import { formatDateTime } from "../utils/dateUtils";
 import { getAllUsers } from "../services/employeeService";
+import { useAuth } from "../context/AuthContext";
 
 const TaskForm = ({ modalRef }) => {
+  const { auth } = useAuth();
+
   const [users, setUsers] = useState([]);
   const [taskData, setTaskData] = useState({
     taskSubject: "",
@@ -31,7 +34,7 @@ const TaskForm = ({ modalRef }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const userData = await getAllUsers();
+        const userData = await getAllUsers(auth.email);
         if (userData) setUsers(userData);
       } catch (error) {
         console.error("Failed to fetch users", error);
@@ -74,7 +77,7 @@ const TaskForm = ({ modalRef }) => {
         <div className="modal-box w-11/12 max-w-5xl">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-bold text-lg flex-1">Create Task</h3>
-            <div className="flex items-center  gap-2">
+            <div className="flex items-center gap-2">
               <span className="badge badge-primary text-xs font-semibold">
                 Task Reference ID: (New)
               </span>

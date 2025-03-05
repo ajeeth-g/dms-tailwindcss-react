@@ -21,7 +21,8 @@ import { getNameFromEmail } from "../utils/emailHelpers";
 import LoadingSpinner from "./common/LoadingSpinner";
 
 const DocumentForm = ({ modalRefForm, selectedDocument }) => {
-  const refSeqNoFromParent = selectedDocument?.REF_SEQ_NO;
+  const refSeqNoFromParent = selectedDocument;
+  console.log(refSeqNoFromParent);
 
   const { auth } = useAuth();
 
@@ -364,8 +365,11 @@ const DocumentForm = ({ modalRefForm, selectedDocument }) => {
 
                 {/* Action Button */}
                 <div className="modal-action">
-                  <button type="submit" className="btn btn-success">
-                    Create Document
+                  <button type="submit" className="btn btn-primary">
+                    {formData.REF_SEQ_NO === -1
+                      ? "Create Document"
+                      : "Save Changes"}
+
                     {isSubmitting ? (
                       <LoadingSpinner className="loading loading-spinner loading-md" />
                     ) : (
@@ -387,7 +391,11 @@ const DocumentForm = ({ modalRefForm, selectedDocument }) => {
                     <UserRound className="h-4 w-4" />
                     <label className="text-sm">Uploader Name</label>
                   </div>
-                  <p className="text-sm font-medium">{UserName}</p>
+                  <p className="text-sm font-medium">
+                    {formData.REF_SEQ_NO === -1
+                      ? UserName
+                      : selectedDocument.USER_NAME}
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 w-full">
@@ -396,7 +404,7 @@ const DocumentForm = ({ modalRefForm, selectedDocument }) => {
                     <label className="text-sm">Document Received From</label>
                   </div>
                   <p className="text-sm font-medium">
-                    {dmsMasterData.DOC_SOURCE_FROM ? "" : "-"}
+                    {formData.DOC_SOURCE_FROM ? "" : "-"}
                   </p>
                 </div>
 

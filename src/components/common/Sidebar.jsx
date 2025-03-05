@@ -40,9 +40,10 @@ const Sidebar = ({ isOpen }) => {
       <div className="divider mt-2 mb-0"></div>
 
       <div className="px-2 pt-2">
-        <h6 className="text-xs text-gray-500 font-bold py-2">MENU</h6>
         {/* Navigation Menu */}
+
         <ul className="menu menu-md w-full p-0">
+          <li className="menu-title">MENU</li>
           <li>
             <Link
               to="/"

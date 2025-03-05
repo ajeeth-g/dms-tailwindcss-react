@@ -1,20 +1,3 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { v4 as uuidv4 } from "uuid";
-import defaultIcon from "../assets/default-doc-icon.png";
-import excelIcon from "../assets/excel-icon.png";
-import pdfIcon from "../assets/pdf-icon.png";
-import pptIcon from "../assets/ppt-icon.png";
-import wordIcon from "../assets/word-icon.png";
-import { useAuth } from "../context/AuthContext";
-import LoadingSpinner from "./common/LoadingSpinner";
-import DocumentUpload from "./DocumentUpload";
-import { deleteDMSMaster, getDocMasterList } from "../services/dmsService";
 import {
   flexRender,
   getCoreRowModel,
@@ -30,14 +13,23 @@ import {
   ChevronsLeft,
   ChevronsRight,
   FilePen,
-  FileStack,
-  FileUp,
-  Pencil,
   SquarePenIcon,
   Trash2,
   Upload,
 } from "lucide-react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { v4 as uuidv4 } from "uuid";
+import { useAuth } from "../context/AuthContext";
+import { deleteDMSMaster, getDocMasterList } from "../services/dmsService";
+import LoadingSpinner from "./common/LoadingSpinner";
 import DocumentForm from "./DocumentForm";
+import DocumentUpload from "./DocumentUpload";
 
 const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
   const [masterData, setMasterData] = useState([]);
@@ -151,8 +143,14 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
         cell: (info) => info.getValue() || "-",
       },
       {
+        header: "Document No",
+        size: 100,
+        accessorKey: "DOCUMENT_NO",
+        cell: (info) => info.getValue() || "-",
+      },
+      {
         header: "Uploader",
-        size: 200,
+        size: 150,
         accessorKey: "USER_NAME",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
@@ -165,36 +163,48 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
         ),
       },
       {
+        header: "Source Channel",
+        size: 100,
+        accessorKey: "SOURCE_CHANNEL",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <div>
+              <p className="text-xs font-semibold">
+                {row.getValue("SOURCE_CHANNEL")}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
         header: "Related to",
         size: 100,
         accessorKey: "DOC_RELATED_TO",
         cell: (info) => info.getValue() || "-",
       },
       {
-        header: "Remarks",
-        size: 250,
-        accessorKey: "COMMENTS",
-        cell: (info) => info.getValue() || "-",
+        header: "Category",
+        size: 200,
+        accessorKey: "DOC_RELATED_CATEGORY",
+        cell: ({ row }) => (
+          <p className="truncate hover:text-clip">
+            {row.getValue("DOC_RELATED_CATEGORY") || "-"}
+          </p>
+        ),
       },
+
       {
         header: "Status",
         size: 100,
         accessorKey: "DOCUMENT_STATUS",
-        cell: (info) =>
-          info.getValue() ? (
-            info.getValue()
-          ) : (
-            <span className="badge badge-error text-xs font-medium">
-              Not Yet
-            </span>
-          ),
+        cell: (info) => (info.getValue() ? info.getValue() : <span>-</span>),
       },
       {
         header: "Docs",
         accessorKey: "NO_OF_DOCUMENTS",
         size: 50,
         cell: (info) => (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-end gap-1">
             {info.getValue() > 0 ? (
               <>
                 <span className="badge badge-success text-xs font-medium">
