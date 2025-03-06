@@ -64,6 +64,7 @@ export const AuthProvider = ({ children }) => {
       };
     }
   });
+  
   // Load stored auth and userData from localStorage on mount only
   useEffect(() => {
     try {

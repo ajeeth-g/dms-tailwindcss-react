@@ -15,17 +15,13 @@ const Greeting = () => {
     year: "numeric",
   });
 
-  const imageSrc = userData.Current_User_ImageData
-    ? `data:image/bmp;base64,${hexToBase64(userData.Current_User_ImageData)}`
-    : "https://via.placeholder.com/150";
-
   return (
     <div className="flex items-center gap-4 p-7 rounded-2xl shadow-lg border border-gray-700">
       {/* Avatar Section */}
       <div className="w-20 h-20 rounded-full overflow-hidden shadow-md border-2 border-gray-700">
         <img
           alt="User Avatar"
-          src={imageSrc}
+          src={`data:image/jpeg;base64,${userData.Current_User_ImageData}`}
           className="w-full h-full object-cover"
         />
       </div>

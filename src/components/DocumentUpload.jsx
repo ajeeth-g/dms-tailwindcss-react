@@ -176,29 +176,40 @@ const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
     }
   };
 
-  const handleDownload = (doc) => {
+  // Download & view documents
+  const handleViewDocs = async (selectedDocs) => {
     try {
-      if (doc.DOC_DATA) {
-        const byteCharacters = atob(doc.DOC_DATA);
-        const byteNumbers = new Uint8Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const blob = new Blob([byteNumbers], {
-          type: `application/${doc.DOC_EXT}`,
+      const response = await getDataModel(
+        {
+          dataModelName: "SYNM_DMS_DETAILS",
+          whereCondition: `REF_SEQ_NO = ${selectedDocs.REF_SEQ_NO} AND SERIAL_NO = ${selectedDocs.SERIAL_NO}`,
+          orderby: "",
+        },
+        auth.email
+      );
+
+      if (!response?.length) {
+        throw new Error("No documents found.");
+      }
+
+      // Since only one document is expected, take the first result.
+      const doc = response[0];
+      if (Array.isArray(doc.DOC_DATA)) {
+        const blob = new Blob([new Uint8Array(doc.DOC_DATA)], {
+          type: "application/octet-stream",
         });
-        const url = URL.createObjectURL(blob);
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = doc.DOC_NAME;
+        link.download =
+          doc.DOC_NAME || `document_${selectedDocs.REF_SEQ_NO}.bin`;
         document.body.appendChild(link);
         link.click();
-        URL.revokeObjectURL(url);
-        document.body.removeChild(link);
+        link.remove();
+        window.URL.revokeObjectURL(url);
       }
     } catch (err) {
-      console.error("Download error:", err);
-      alert("Failed to download document");
+      console.error("Error downloading documents:", err);
     }
   };
 
@@ -223,7 +234,12 @@ const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
   };
 
   return (
-    <dialog ref={modalRefUpload} className="modal">
+    <dialog
+      ref={modalRefUpload}
+      id="document-upload-form"
+      name="document-upload-form"
+      className="modal"
+    >
       <div className="modal-box w-11/12 max-w-5xl">
         <div className="flex items-center justify-between gap-2 mb-6">
           <div className="flex items-center justify-between gap-2 w-full">
@@ -249,7 +265,7 @@ const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
         </div>
 
         {fetchError && (
-          <div className="alert alert-error mb-4">
+          <div className="alert alert-error mb-1">
             <span>{fetchError}</span>
           </div>
         )}
@@ -295,7 +311,7 @@ const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
                         <div className="flex items-center gap-2">
                           <Button
                             icon={<View size={18} />}
-                            onClick={() => handleDownload(doc)}
+                            onClick={() => handleViewDocs(doc)}
                             tooltip="View"
                             variant="ghost"
                           />
@@ -305,67 +321,6 @@ const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
                             tooltip="Delete"
                             variant="error"
                             className="text-red-600"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-1 my-2">
-                        <div>
-                          <div className="flex items-center gap-1 mb-1">
-                            <FileType2 className="h-4 w-4" />
-                            <label className="text-xs">Document Category</label>
-                          </div>
-                          <select
-                            disabled
-                            className="select select-bordered select-sm w-full"
-                            value={doc.DOC_RELATED_CATEGORY || ""}
-                            onChange={(e) =>
-                              setExistingDocs((docs) =>
-                                docs.map((item, i) =>
-                                  i === index
-                                    ? {
-                                        ...item,
-                                        DOC_RELATED_CATEGORY: e.target.value,
-                                      }
-                                    : item
-                                )
-                              )
-                            }
-                            required
-                          >
-                            <option value="">Select Category</option>
-                            {categoryData.map((category) => (
-                              <option
-                                key={category.CATEGORY_NAME}
-                                value={category.CATEGORY_NAME}
-                              >
-                                {category.CATEGORY_NAME}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center gap-1 mb-1">
-                            <CalendarDays className="h-4 w-4" />
-                            <label className="text-xs">
-                              Document Expiry Date
-                            </label>
-                          </div>
-                          <input
-                            disabled
-                            type="date"
-                            className="input input-bordered input-sm w-full"
-                            value={convertServiceDate(doc.EXPIRY_DATE)}
-                            onChange={(e) =>
-                              setExistingDocs((docs) =>
-                                docs.map((item, i) =>
-                                  i === index
-                                    ? { ...item, EXPIRY_DATE: e.target.value }
-                                    : item
-                                )
-                              )
-                            }
                           />
                         </div>
                       </div>
@@ -417,83 +372,6 @@ const DocumentUpload = ({ modalRefUpload, selectedDocument }) => {
                         >
                           <X className="h-4 w-4" />
                         </button>
-                      </div>
-
-                      <div className="flex-1 flex-col">
-                        <div className="grid grid-cols-1 gap-2 my-2">
-                          <div>
-                            <div className="flex items-center gap-1 mb-1">
-                              <FileType2 className="h-4 w-4" />
-                              <label className="text-xs">
-                                Document Category
-                              </label>
-                            </div>
-                            <select
-                              className="select select-bordered select-sm w-full"
-                              value={file.category}
-                              onChange={(e) =>
-                                setFiles((f) =>
-                                  f.map((item, i) =>
-                                    i === index
-                                      ? {
-                                          ...item,
-                                          DOC_RELATED_CATEGORY: e.target.value,
-                                        }
-                                      : item
-                                  )
-                                )
-                              }
-                              required
-                            >
-                              <option value="">Select Category</option>
-                              {categoryData.map((category) => (
-                                <option
-                                  key={category.CATEGORY_NAME}
-                                  value={category.CATEGORY_NAME}
-                                >
-                                  {category.CATEGORY_NAME}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div>
-                            <div className="flex items-center gap-1 mb-1">
-                              <CalendarDays className="h-4 w-4" />
-                              <label className="text-xs">
-                                Document Expiry Date
-                              </label>
-                            </div>
-                            <input
-                              type="date"
-                              className="input input-bordered input-sm w-full"
-                              value={file.expiryDate}
-                              onChange={(e) =>
-                                setFiles((f) =>
-                                  f.map((item, i) =>
-                                    i === index
-                                      ? { ...item, EXPIRY_DATE: e.target.value }
-                                      : item
-                                  )
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                          <div
-                            className="bg-blue-500 h-2.5 w-full rounded-full transition-all duration-300"
-                            style={{
-                              width: `${Math.min(file.progress, 100)}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="text-xs opacity-30">
-                          {file.progress < 100
-                            ? `Uploading... ${file.progress}%`
-                            : "Upload Completed ✅"}
-                        </span>
                       </div>
                     </div>
                   </div>

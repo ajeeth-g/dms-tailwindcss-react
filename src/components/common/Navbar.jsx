@@ -9,7 +9,6 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getNameFromEmail } from "../../utils/emailHelpers";
-import { hexToBase64 } from "../../utils/hexToBase64";
 
 const Navbar = ({ toggleSidebar }) => {
   const { auth, userData, logout } = useAuth();
@@ -50,12 +49,6 @@ const Navbar = ({ toggleSidebar }) => {
     logout();
     navigate("/login");
   };
-
-  // Determine the image source.
-  // If userData.Current_User_ImageData exists, convert it from hex to Base64 and use the BMP MIME type.
-  const imageSrc = userData.Current_User_ImageData
-    ? `data:image/bmp;base64,${hexToBase64(userData.Current_User_ImageData)}`
-    : "https://via.placeholder.com/150";
 
   return (
     <nav className="navbar bg-base-300 text-base-content h-16 flex items-center justify-between">
@@ -103,7 +96,10 @@ const Navbar = ({ toggleSidebar }) => {
           >
             <div className="avatar">
               <div className="w-10 h-10 rounded-full">
-                <img alt="User avatar" src={imageSrc} />
+                <img
+                  alt="User avatar"
+                  src={`data:image/jpeg;base64,${userData.Current_User_ImageData}`}
+                />
               </div>
             </div>
             <div className="flex flex-col items-start">
@@ -132,7 +128,10 @@ const Navbar = ({ toggleSidebar }) => {
           >
             <div className="avatar">
               <div className="w-10 h-10 rounded-full">
-                <img alt="User avatar" src={imageSrc} />
+                <img
+                  alt="User avatar"
+                  src={`data:image/jpeg;base64,${userData.Current_User_ImageData}`}
+                />
               </div>
             </div>
             <div className="flex flex-col items-start">

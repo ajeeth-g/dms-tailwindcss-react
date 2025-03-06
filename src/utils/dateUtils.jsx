@@ -10,7 +10,9 @@ export function formatDateTime(date) {
     "T" +
     pad(date.getHours()) +
     ":" +
-    pad(date.getMinutes())
+    pad(date.getMinutes()) +
+    ":" +
+    pad(date.getSeconds())
   );
 }
 

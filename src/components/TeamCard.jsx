@@ -10,13 +10,13 @@ const TeamCard = ({ user }) => {
     email_address,
     domain_user_name,
     emp_no,
-    image,
+    imageSrc,
     tasks = 10,
     completed = 8,
     documents = 10,
     pendingDocs = 2,
     lastActive = "N/A",
-    priority = "N/A",
+    priority = "Good",
   } = user;
 
   const pendingTasks = tasks - completed;
@@ -28,6 +28,9 @@ const TeamCard = ({ user }) => {
 
   const COLORS = ["#10B981", "#EF4444"];
 
+  // console.log(user);
+  
+
   return (
     <motion.div
       className="p-3 rounded-lg shadow-sm flex flex-col border border-gray-700 bg-gray-900"
@@ -36,8 +39,12 @@ const TeamCard = ({ user }) => {
       {/* Employee Info */}
       <div className="flex items-center gap-3 mb-2">
         <img
-          src={image || "https://via.placeholder.com/40"}
-          alt={user_name || domain_user_name}
+          src={user.image}
+          alt={user.user_name}
+          onError={(e) => {
+            e.target.onerror = null; // Prevent infinite loop
+            e.target.src = "/placeholder-user.png";
+          }}
           className="w-10 h-10 rounded-full border border-gray-600"
         />
         <div>
@@ -49,7 +56,7 @@ const TeamCard = ({ user }) => {
       </div>
 
       {/* Pie Chart & Stats */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-start gap-2">
         <PieChart width={60} height={60}>
           <Pie
             data={chartData}
@@ -66,27 +73,70 @@ const TeamCard = ({ user }) => {
           <Tooltip />
         </PieChart>
 
-        <div className="text-xs text-gray-300">
-          <p>✅ {completed} Tasks</p>
-          <p>❌ {pendingTasks} Pending</p>
-          <p>📄 {documents} Docs</p>
-          <p className={pendingDocs > 0 ? "text-red-400" : "text-green-400"}>
-            ⚠️ {pendingDocs} Pending
-          </p>
+        <div className="flex items-start justify-between w-full gap-1">
+          {/* Task Overview */}
+          <div className="text-xs text-gray-300">
+            <h6 className="font-semibold mb-1">Task Overview</h6>
+            <p className="truncate">📄{documents} Total Tasks</p>
+            <p className="truncate">✅{completed} Completed</p>
+            <p className="truncate">❌{pendingTasks} Pending</p>
+          </div>
+
+          {/* Month Overview */}
+          <div className="p-2 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg shadow flex flex-col items-center">
+            <h6 className="text-xs font-semibold text-white">Month Overview</h6>
+
+            <div className="flex items-end">
+              <div className="relative mt-1">
+                {/* Donut background */}
+                <svg className="w-11 h-11" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/30"
+                    strokeWidth="3"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845
+           a 15.9155 15.9155 0 0 1 0 31.831
+           a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  {/* Donut progress: assuming 50% = 5 out of 10 docs */}
+                  <path
+                    className="text-white"
+                    strokeWidth="3"
+                    strokeDasharray="50, 100"
+                    strokeDashoffset="0"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845
+           a 15.9155 15.9155 0 0 1 0 31.831
+           a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                {/* Centered text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-lg font-bold leading-none text-white">
+                    5
+                  </span>
+                  <span className="text-[10px] text-white/80">/10</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="mt-2">
         <div className="text-xs text-gray-400 flex justify-between">
-          <span>Progress</span>
-          <span>{Math.round((completed / tasks) * 100)}%</span>
+          <span>Task Progress</span>
+          <span>{progress}%</span>
         </div>
         <div className="w-full h-1.5 bg-gray-700 rounded-full mt-1">
           <div
             className="h-1.5 rounded-full"
             style={{
-              width: `${(completed / tasks) * 100}%`,
+              width: `${progress}%`,
               backgroundColor: "#10B981",
             }}
           />
@@ -100,14 +150,14 @@ const TeamCard = ({ user }) => {
         </p>
         <p
           className={
-            user.priority === "High"
-              ? "text-red-400"
-              : user.priority === "Medium"
+            priority === "Good"
+              ? "text-green-400"
+              : priority === "Average"
               ? "text-yellow-400"
-              : "text-green-400"
+              : "text-red-400"
           }
         >
-          ⚠️ {priority} Priority
+          {priority}
         </p>
       </div>
     </motion.div>

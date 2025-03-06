@@ -1,12 +1,12 @@
 import { Route, Routes } from "react-router-dom";
 import ProtectedLayout from "./layouts/ProtectedLayout";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
+import CategoryViewPage from "./pages/CategoryViewPage";
 import DashboardPage from "./pages/DashboardPage";
 import DocumentListPage from "./pages/DocumentListPage";
 import DocumentViewPage from "./pages/DocumentViewPage";
-import CategoryViewPage from "./pages/CategoryViewPage";
+import Login from "./pages/Login";
 import MyTeamPage from "./pages/MyTeamPage";
+import NotFound from "./pages/NotFound";
 
 const App = () => {
   return (

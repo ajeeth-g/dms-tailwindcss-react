@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AIPoweredInsights from "../components/AIPoweredInsights";
 import ChannelPerformance from "../components/ChannelPerformance";
 import DailyReports from "../components/DailyReports";
@@ -10,8 +10,11 @@ import TeamDashboard from "../components/TeamDashboard";
 import { useAuth } from "../context/AuthContext";
 import { doConnection } from "../services/connectionService";
 import DocumentListPage from "./DocumentListPage";
+import DashboardFilter from "../components/DashboardFilter";
 
 export default function DashboardPage() {
+  const [filterDays, setFilterDays] = useState("30");
+  const [stats, setStats] = useState([]);
   const { auth, userData } = useAuth();
 
   useEffect(() => {
@@ -28,6 +31,9 @@ export default function DashboardPage() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
       <div className="col-span-2">
         <Greeting />
+      </div>
+      <div className="col-span-2 flex justify-end">
+        <DashboardFilter onFilterChange={setFilterDays} />
       </div>
       <div className="col-span-2 md:col-span-1 lg:col-span-1">
         <DocumentDistribution />
@@ -49,9 +55,6 @@ export default function DashboardPage() {
       </div>
       <div className="col-span-2">
         <AIPoweredInsights />
-      </div>
-      <div className="col-span-2">
-        <DocumentListPage />
       </div>
     </div>
   );

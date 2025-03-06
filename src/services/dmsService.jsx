@@ -17,7 +17,6 @@ const getEndpoint = (dynamicURL) => {
 
 const DEFAULT_SOAP_URL = "/api";
 
-// Create, modify & save DMS master record.
 export const createAndSaveDMSMaster = async (
   formData,
   email,
@@ -44,7 +43,6 @@ export const createAndSaveDMSMaster = async (
   return parsedResponse;
 };
 
-// Create, modify & save DMS detail record.
 export const createAndSaveDMSDetails = async (
   payload,
   email,
@@ -67,7 +65,6 @@ export const createAndSaveDMSDetails = async (
   return parsedResponse;
 };
 
-// Create, modify & save DMS detail record.
 export const getDocMasterList = async (
   payload,
   email,
@@ -90,7 +87,6 @@ export const getDocMasterList = async (
   return parsedResponse;
 };
 
-// Delete DMS master record.
 export const deleteDMSMaster = async (
   payload,
   email,
@@ -113,7 +109,6 @@ export const deleteDMSMaster = async (
   return parsedResponse;
 };
 
-// Delete DMS details record.
 export const deleteDMSDetails = async (
   payload,
   email,

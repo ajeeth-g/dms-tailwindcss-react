@@ -155,7 +155,12 @@ const DocumentForm = ({ modalRefForm, selectedDocument }) => {
   };
 
   return (
-    <dialog ref={modalRefForm} id="create-task" className="modal">
+    <dialog
+      ref={modalRefForm}
+      id="document-form"
+      name="document-form"
+      className="modal"
+    >
       <div className="modal-box w-11/12 max-w-5xl">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold text-xl">
@@ -176,7 +181,7 @@ const DocumentForm = ({ modalRefForm, selectedDocument }) => {
         </div>
         <div className="divider my-1"></div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} id="document-form" name="document-form">
           <div className="grid grid-cols-3 gap-1 mx-2">
             {/* Left Side - Document Form */}
             <div className="col-span-2">

@@ -2,7 +2,7 @@
 import { createSoapEnvelope, parseDataModelResponse } from "../utils/soapUtils";
 import { doConnection } from "./connectionService";
 import {
-  getAllEmployeeDetailsPayload,
+  getAllActiveUsersPayload,
   getEmployeeImagePayload,
   getEmployeeNameAndIdPayload,
 } from "./payloadBuilders";
@@ -48,7 +48,52 @@ export const getEmployeeNameAndId = async (
   return parsedResponse;
 };
 
-// Retrieves employee image.
+// Retrieves all employee details.
+export const getAllUsers = async (userName, dynamicURL = DEFAULT_SOAP_URL) => {
+  const endpoint = getEndpoint(dynamicURL);
+  const payload = getAllUsersPayload(userName);
+
+  const doConnectionResponse = await doConnection(endpoint, userName);
+  if (doConnectionResponse === "ERROR") {
+    throw new Error("Connection failed: Unable to authenticate.");
+  }
+
+  const SOAP_ACTION = "http://tempuri.org/IM_Get_All_Users";
+  const soapBody = createSoapEnvelope("IM_Get_All_Users", payload);
+
+  const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
+  const parsedResponse = parseDataModelResponse(
+    soapResponse,
+    "IM_Get_All_Users"
+  );
+  return parsedResponse;
+};
+
+// Retrieves all active employee details.
+export const getAllActiveUsers = async (
+  userName,
+  dynamicURL = DEFAULT_SOAP_URL
+) => {
+  const endpoint = getEndpoint(dynamicURL);
+  const payload = getAllActiveUsersPayload(userName);
+
+  const doConnectionResponse = await doConnection(endpoint, userName);
+  if (doConnectionResponse === "ERROR") {
+    throw new Error("Connection failed: Unable to authenticate.");
+  }
+
+  const SOAP_ACTION = "http://tempuri.org/IM_Get_All_ActiveUsers";
+  const soapBody = createSoapEnvelope("IM_Get_All_ActiveUsers", payload);
+
+  const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
+  const parsedResponse = parseDataModelResponse(
+    soapResponse,
+    "IM_Get_All_ActiveUsers"
+  );
+  return parsedResponse;
+};
+
+// Retrieves employee image (bytearray).
 export const getEmployeeImage = async (
   employeeNo,
   email,
@@ -62,34 +107,15 @@ export const getEmployeeImage = async (
     throw new Error("Connection failed: Unable to authenticate.");
   }
 
-  const SOAP_ACTION = "http://tempuri.org/getpic";
-  const soapBody = createSoapEnvelope("getpic", payload);
+  const SOAP_ACTION = "http://tempuri.org/getpic_bytearray";
+  const soapBody = createSoapEnvelope("getpic_bytearray", payload);
 
   const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
-  console.log(soapResponse);
 
-  const parsedResponse = parseDataModelResponse(soapResponse, "getpic");
-
-  return parsedResponse;
-};
-
-// Retrieves employee details.
-export const getAllUsers = async (email, dynamicURL = DEFAULT_SOAP_URL) => {
-  const endpoint = getEndpoint(dynamicURL);
-  const payload = getAllEmployeeDetailsPayload(email);
-
-  const doConnectionResponse = await doConnection(endpoint, email);
-  if (doConnectionResponse === "ERROR") {
-    throw new Error("Connection failed: Unable to authenticate.");
-  }
-
-  const SOAP_ACTION = "http://tempuri.org/IM_Get_All_Users";
-  const soapBody = createSoapEnvelope("IM_Get_All_Users", payload);
-
-  const soapResponse = await soapClient(endpoint, SOAP_ACTION, soapBody);
   const parsedResponse = parseDataModelResponse(
     soapResponse,
-    "IM_Get_All_Users"
+    "getpic_bytearray"
   );
+
   return parsedResponse;
 };

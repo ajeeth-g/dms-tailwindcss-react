@@ -1,24 +1,18 @@
-import { Link } from "react-router-dom";
-import Logo from "../../assets/logo-light.png";
 import {
-  ExternalLink,
   FileSearch,
   FileText,
-  FileUp,
-  Grid,
-  Grid2X2,
   LayoutDashboard,
   LayoutGrid,
-  LayoutPanelLeft,
-  ListTodo,
   Users,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import Logo from "../../assets/logo-transparent.jpg";
 
 const Sidebar = ({ isOpen }) => {
   return (
     <aside
       className={`${
-        isOpen ? "w-full max-w-56" : "w-0"
+        isOpen ? "w-full max-w-48" : "w-0"
       } min-h-screen bg-base-300 text-base-content transition-all duration-300 overflow-hidden`}
     >
       <Link
@@ -39,15 +33,15 @@ const Sidebar = ({ isOpen }) => {
 
       <div className="divider mt-2 mb-0"></div>
 
-      <div className="px-2 pt-2">
+      <div className="px-2">
         {/* Navigation Menu */}
 
         <ul className="menu menu-md w-full p-0">
-          <li className="menu-title">MENU</li>
+          <li className="menu-title text-xs">MENU</li>
           <li>
             <Link
               to="/"
-              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+              className="text-sm rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <LayoutDashboard className="h-5 w-5" />
               Dashboard
@@ -56,7 +50,7 @@ const Sidebar = ({ isOpen }) => {
           <li>
             <Link
               to="/my-team"
-              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+              className="text-sm rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <Users className="h-5 w-5" />
               My Team
@@ -65,7 +59,7 @@ const Sidebar = ({ isOpen }) => {
           <li>
             <Link
               to="/category-view"
-              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+              className="text-sm rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <LayoutGrid className="h-5 w-5" />
               Category View
@@ -74,7 +68,7 @@ const Sidebar = ({ isOpen }) => {
           <li>
             <Link
               to="/document-list"
-              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+              className="text-sm rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <FileText className="h-5 w-5" />
               Document List
@@ -83,7 +77,7 @@ const Sidebar = ({ isOpen }) => {
           <li>
             <Link
               to="/document-view"
-              className="text-lg rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
+              className="text-sm rounded-full py-3 px-5 mb-2 hover:bg-gray-800 transition"
             >
               <FileSearch className="h-5 w-5" />
               Document View

@@ -165,7 +165,7 @@ const DocumentTable = ({ fetchDataRef, globalFilter, setGlobalFilter }) => {
       {
         header: "Source Channel",
         size: 100,
-        accessorKey: "SOURCE_CHANNEL",
+        accessorKey: "CHANNEL_SOURCE",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <div>

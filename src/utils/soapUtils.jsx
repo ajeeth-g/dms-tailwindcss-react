@@ -65,7 +65,6 @@ export const parseServiceDate = (dateString) => {
       })
       .replace(",", ""); // Remove the comma for correct format
   } else {
-    console.log("no date");
   }
   return dateString; // Return as-is if it doesn't match the expected format
 };

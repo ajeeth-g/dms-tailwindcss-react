@@ -1,9 +1,12 @@
-//  payload for doConnection
 export const connectionPayload = (loginUserName) => ({
   LoginUserName: loginUserName,
 });
 
-// Payload for DMS_CreateAndSave_DMS_Master
+export const verifyauthenticationPayload = (userDetails) => ({
+  username: userDetails.User,
+  password: userDetails.Pass,
+});
+
 export const createDmsMasterPayload = (formData) => ({
   REF_SEQ_NO: formData.REF_SEQ_NO, // long
   DOCUMENT_NO: formData.DOCUMENT_NO, // string
@@ -20,7 +23,18 @@ export const createDmsMasterPayload = (formData) => ({
   REF_TASK_ID: formData.REF_TASK_ID, // long
 });
 
-// Payload for DMS_CreateAndSave_DMS_Details
+export const createNewTaskPayload = (taskData) => ({
+  UserName: taskData.userName,
+  Subject: taskData.taskName,
+  Details: taskData.taskSubject,
+  RelatedTo: taskData.relatedTo,
+  AssignedUser: taskData.assignedTo,
+  CreatorReminderOn: taskData.creatorReminderOn,
+  StartDate: taskData.assignedDate,
+  CompDate: taskData.targetDate,
+  RemindTheUserOn: taskData.remindOnDate,
+});
+
 export const createDmsDetailsPayload = ({
   refSeqNo,
   serialNo,
@@ -59,7 +73,6 @@ export const createDmsDetailsPayload = ({
   FILE_PATH: filePath, // string
 });
 
-// Payload for DataModel_GetData
 export const getDataModelPayload = ({
   dataModelName,
   whereCondition,
@@ -70,37 +83,18 @@ export const getDataModelPayload = ({
   Orderby: orderby, // string
 });
 
-// Payload for IM_Get_All_Users
-// No parameters needed – returns an empty object.
-export const getAllUsersPayload = () => ({});
-
-// Payload for IM_Get_User_Tasks
-export const getUserTasksPayload = ({ userName }) => ({
-  USER_NAME: userName, // string
-});
-
-// Payload for getpic (or getpic_bytearray)
-export const getEmployeePicturePayload = ({ empNo }) => ({
-  EmpNo: empNo, // string
-});
-
-// Payload for getEmployeeNameAndIdPayload
 export const getEmployeeNameAndIdPayload = (userfirstname) => ({
   userfirstname: userfirstname,
 });
 
-// Payload for getEmployeeImage
 export const getEmployeeImagePayload = (empNo) => ({
   EmpNo: empNo,
 });
 
-// Payload for getEmployeeDetails
-export const getAllEmployeeDetailsPayload = (empolyeeDetails) => ({
-  UserName: empolyeeDetails,
+export const getAllUsersPayload = (userName) => ({
+  UserName: userName,
 });
 
-// Payload for verifyauthenticationPayload
-export const verifyauthenticationPayload = (userDetails) => ({
-  username: userDetails.User,
-  password: userDetails.Pass,
+export const getAllActiveUsersPayload = (userName) => ({
+  UserName: userName,
 });

@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
-import { FileText, View } from "lucide-react";
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { useAuth } from "../context/AuthContext";
-import { getDataModel } from "../services/dataService";
-import { getAllUsers } from "../services/employeeService";
-import { formatDateTime } from "../utils/dateUtils";
+import { Edit, FileText, View } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import TaskForm from "../components/TaskForm";
 import Button from "../components/common/Button";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import { useAuth } from "../context/AuthContext";
+import { getDataModel } from "../services/dataService";
+import { getDocMasterList } from "../services/dmsService";
+import { getAllActiveUsers } from "../services/employeeService";
+import { formatDateTime } from "../utils/dateUtils";
+import { getNameFromEmail } from "../utils/emailHelpers";
 
 export default function DocumentViewPage() {
   const [docsData, setDocsData] = useState([]);
@@ -16,42 +18,50 @@ export default function DocumentViewPage() {
   const [error, setError] = useState(null);
   const [users, setUsers] = useState([]);
   const modalRef = useRef(null);
+  const [assignedTask, setAssignedTask] = useState(null);
   const { auth } = useAuth();
+  const UserName = getNameFromEmail(auth.email);
 
-  // Fetch documents from API
-  const fetchDmsDetailsDataModel = useCallback(async () => {
+  // Task assignment state
+  const [taskData, setTaskData] = useState({
+    userName: UserName.toUpperCase(),
+    taskName: "",
+    taskSubject: "",
+    relatedTo: "",
+    assignedTo: "",
+    creatorReminderOn: formatDateTime(new Date()),
+    assignedDate: formatDateTime(new Date()),
+    targetDate: formatDateTime(new Date(Date.now() + 86400000)), // +1 day
+    remindOnDate: formatDateTime(new Date()),
+  });
+
+  // Fetch documents from master
+  const fetchDmsMaster = useCallback(async () => {
     setLoadingDocs(true);
     setError(null);
     try {
-      const response = await getDataModel(
-        {
-          dataModelName: "SYNM_DMS_MASTER",
-          whereCondition: "",
-          orderby: "",
-        },
-        auth.email
-      );
+      const response = await getDocMasterList("", auth.email);
       setDocsData(response?.length > 0 ? response : []);
       if (!response?.length) setError("No documents available.");
     } catch (err) {
-      console.error("Error fetching data model:", err);
-      setError(err.message || "Error fetching documents.");
+      console.error("Error fetching dms master:", err);
+      setError(err.message || "Error fetching dms master.");
     } finally {
       setLoadingDocs(false);
     }
   }, [auth.email]);
 
   useEffect(() => {
-    fetchDmsDetailsDataModel();
-  }, [fetchDmsDetailsDataModel]);
+    fetchDmsMaster();
+  }, [fetchDmsMaster]);
 
-  // Fetch users list
+  // Fetch all active users list
   const fetchUsers = useCallback(async () => {
     try {
-      const userData = await getAllUsers(auth.email);
+      const userData = await getAllActiveUsers(auth.email);
       setUsers(Array.isArray(userData) ? userData : []);
     } catch (err) {
-      console.error("Error fetching users:", err);
+      console.error("Error fetching all active users:", err);
       setUsers([]);
     }
   }, [auth.email]);
@@ -86,7 +96,8 @@ export default function DocumentViewPage() {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
-          link.download = doc.DOC_NAME || `document_${refSeqNo}_${index + 1}.bin`;
+          link.download =
+            doc.DOC_NAME || `document_${refSeqNo}_${index + 1}.bin`;
           document.body.appendChild(link);
           link.click();
           link.remove();
@@ -101,26 +112,25 @@ export default function DocumentViewPage() {
     }
   };
 
-  // Task assignment state
-  const [taskData, setTaskData] = useState({
-    taskName: "Project Plan",
-    taskSubject: "",
-    relatedTo: "HR",
-    assignedTo: "",
-    creatorReminderOn: formatDateTime(new Date()),
-    assignedDate: formatDateTime(new Date()),
-    targetDate: formatDateTime(new Date(Date.now() + 86400000)), // +1 day
-    remindOnDate: formatDateTime(new Date()),
-  });
+  // Callback function to receive created task from TaskForm
+  const handleTaskCreated = (newTask) => {
+    setAssignedTask(newTask);
+  };
 
-  // Handle dropdown select
-  const handleEmployeeSelect = (event) => {
+  // Handle dropdown select. Now we also pass the document details.
+  const handleEmployeeSelect = (doc, event) => {
     const { name, value } = event.target;
-    setTaskData((prev) => ({ ...prev, [name]: value }));
+    // Update taskData with the selected document details
+    setTaskData((prev) => ({
+      ...prev,
+      taskName: doc.DOCUMENT_DESCRIPTION,
+      relatedTo: doc.DOC_RELATED_TO,
+      [name]: value,
+    }));
     modalRef.current?.showModal();
   };
 
-  // Handle task data updates
+  // Update task data from TaskForm
   const handleTaskChange = (e) => {
     const { name, value } = e.target;
     setTaskData((prev) => ({ ...prev, [name]: value }));
@@ -128,56 +138,89 @@ export default function DocumentViewPage() {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loadingDocs ? (
-          <div className="grid place-items-center">
-            <LoadingSpinner className="loading loading-dots loading-md" />
-          </div>
-        ) : docsData.length > 0 ? (
-          docsData.map((doc) => (
+      {loadingDocs ? (
+        <div className="flex justify-center items-start">
+          <LoadingSpinner className="loading loading-spinner loading-lg" />
+        </div>
+      ) : docsData.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {docsData.map((doc) => (
             <motion.div
               key={doc.REF_SEQ_NO}
-              className="bg-gradient-to-t from-gray-800 to-gray-900 shadow-lg rounded-2xl p-6 border border-gray-700"
               whileHover={{ scale: 1.05 }}
+              className="card card-compact bg-neutral shadow-xl"
             >
-              <div className="flex items-center gap-2">
-                <FileText className="w-14 h-14 text-blue-400" />
-                <div>
-                  <h3 className="text-xl font-medium">{doc.DOCUMENT_DESCRIPTION}</h3>
-                  <p className="text-xs text-gray-400">{doc.USER_NAME}</p>
-                  <p className="text-xs text-gray-400">Due: {doc.EXPIRY_DATE}</p>
+              <div className="card-body">
+                <div className="flex items-start gap-1">
+                  <FileText className="w-10 h-10 text-blue-400" />
+                  <div>
+                    <h2 className="card-title">{doc.DOCUMENT_DESCRIPTION}</h2>
+                    <p className="text-sm text-gray-500">{doc.USER_NAME}</p>
+                    <p className="text-sm text-gray-500">
+                      Due: {doc.EXPIRY_DATE}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                <Button
-                  className="btn btn-neutral btn-sm"
-                  icon={<View className="h-4 w-4" />}
-                  label={loadingDownload[doc.REF_SEQ_NO] ? "Loading..." : "View Docs"}
-                  onClick={() => handleViewDocs(doc.REF_SEQ_NO)}
-                  disabled={loadingDownload[doc.REF_SEQ_NO]}
-                />
-                <select
-                  name="assignedTo"
-                  className="select select-bordered select-sm text-center"
-                  onChange={handleEmployeeSelect}
-                  defaultValue=""
-                >
-                  <option value="" disabled>Assign</option>
-                  {users.map((user) => (
-                    <option key={user.user_name} value={user.user_name}>
-                      {user.user_name}
+                <div className="card-actions items-center justify-between gap-1">
+                  <Button
+                    className="btn btn-primary btn-sm"
+                    icon={<View className="h-4 w-4" />}
+                    label={
+                      loadingDownload[doc.REF_SEQ_NO]
+                        ? "Loading..."
+                        : "View Docs"
+                    }
+                    onClick={() => handleViewDocs(doc.REF_SEQ_NO)}
+                    disabled={loadingDownload[doc.REF_SEQ_NO]}
+                  />
+                  <select
+                    name="assignedTo"
+                    className="select select-bordered select-sm"
+                    onChange={(e) => handleEmployeeSelect(doc, e)}
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      Assign
                     </option>
-                  ))}
-                </select>
+                    {users.map((user) => (
+                      <option key={user.user_name} value={user.user_name}>
+                        {user.user_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {error && <p className="text-red-500 mt-2">{error}</p>}
               </div>
-              {error && <p className="text-red-500 mt-2">{error}</p>}
             </motion.div>
-          ))
-        ) : (
+          ))}
+        </div>
+      ) : (
+        <div>
           <p className="text-center text-gray-400">No documents available.</p>
-        )}
-      </div>
-      <TaskForm modalRef={modalRef} data={taskData} onTaskChange={handleTaskChange} />
+        </div>
+      )}
+
+      {/* Render the created task details with an edit icon if assignedTask exists */}
+      {assignedTask && (
+        <div className="mt-6 flex items-center gap-2 p-4 bg-base-100 shadow rounded">
+          <span className="text-lg font-semibold">
+            Assigned to: {assignedTask.AssignedUser}
+          </span>
+          <button
+            className="btn btn-ghost btn-square"
+            onClick={() => modalRef.current?.showModal()}
+          >
+            <Edit className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+      <TaskForm
+        modalRef={modalRef}
+        users={users}
+        taskData={taskData}
+        onTaskChange={handleTaskChange}
+        onTaskCreated={handleTaskCreated}
+      />
     </>
   );
 }
